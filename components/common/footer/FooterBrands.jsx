@@ -15,7 +15,7 @@ export const featuredBrands = [
 
 export default function FooterBrands() {
   const brands = featuredBrands;
-  const topBrands = brands.slice(0, 5);
+  const topBrands = brands.slice(0, 4);
 
   return (
     <div>
