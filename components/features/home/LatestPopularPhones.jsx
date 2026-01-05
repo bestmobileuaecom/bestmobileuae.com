@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { TrendingUp, Clock, Sparkles, ArrowRight, Star, Award, Zap } from "lucide-react";
+import {
+  TrendingUp,
+  Clock,
+  Sparkles,
+  ArrowRight,
+  Star,
+  Award,
+  Zap,
+} from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -14,7 +22,7 @@ const tabs = [
 
 function PhoneRow({ phone, index, tabId }) {
   const score = phone.score || (7 + Math.random() * 2).toFixed(1);
-  
+
   const getBadge = () => {
     switch (tabId) {
       case "latest":
@@ -46,17 +54,12 @@ function PhoneRow({ phone, index, tabId }) {
   };
 
   const badge = getBadge();
-  
+
   return (
     <Link
       href={`/phones/${phone.slug}`}
       className="group flex items-center gap-4 p-4 bg-muted/30 rounded-xl border border-border/40 hover:border-primary/30 hover:bg-muted/50 hover:shadow-md transition-all duration-200"
     >
-      {/* Rank */}
-      <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-primary/10 rounded-full">
-        <span className="text-sm font-bold text-primary">{index + 1}</span>
-      </div>
-
       {/* Image */}
       <div className="relative flex-shrink-0 w-14 h-16 bg-gradient-to-br from-background to-muted/50 rounded-xl overflow-hidden">
         {phone.image || phone.main_image ? (
@@ -80,7 +83,9 @@ function PhoneRow({ phone, index, tabId }) {
             {phone.name}
           </h3>
           {badge && (
-            <span className={`flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${badge.color} text-white`}>
+            <span
+              className={`flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${badge.color} text-white`}
+            >
               {badge.text}
             </span>
           )}
@@ -103,7 +108,10 @@ function PhoneRow({ phone, index, tabId }) {
   );
 }
 
-export default function LatestPopularPhones({ latestPhones = [], popularPhones = [] }) {
+export default function LatestPopularPhones({
+  latestPhones = [],
+  popularPhones = [],
+}) {
   const [activeTab, setActiveTab] = useState("popular");
 
   // Use different data based on tab (for demo, reusing same data with different sorting)
@@ -114,7 +122,9 @@ export default function LatestPopularPhones({ latestPhones = [], popularPhones =
       case "popular":
         return popularPhones;
       case "top-rated":
-        return [...popularPhones].sort((a, b) => (b.score || 8) - (a.score || 8));
+        return [...popularPhones].sort(
+          (a, b) => (b.score || 8) - (a.score || 8)
+        );
       case "best-value":
         return [...latestPhones].reverse();
       default:
@@ -125,12 +135,11 @@ export default function LatestPopularPhones({ latestPhones = [], popularPhones =
   const phonesToShow = getPhones().slice(0, 4);
 
   return (
-    <section className="py-4 md:py-6">
+    <section className="py-6 md:py-8">
       <div className="container mx-auto px-4">
         <div className="max-w-7xl mx-auto">
-          {/* Card Container - medium emphasis */}
-          <div className="bg-card border border-border/50 rounded-2xl overflow-hidden">
-
+          {/* Card Container - Consistent with other sections */}
+          <div className="bg-card border border-border/60 rounded-2xl shadow-sm overflow-hidden">
             <div className="p-5 md:p-6">
               {/* Header with Tabs */}
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
@@ -139,8 +148,12 @@ export default function LatestPopularPhones({ latestPhones = [], popularPhones =
                     <Sparkles className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-foreground">Explore Phones</h2>
-                    <p className="text-sm text-muted-foreground">Latest, popular, top rated & best deals</p>
+                    <h2 className="text-lg font-bold text-foreground">
+                      Explore Phones
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Latest, popular, top rated & best deals
+                    </p>
                   </div>
                 </div>
 
@@ -160,7 +173,11 @@ export default function LatestPopularPhones({ latestPhones = [], popularPhones =
                             : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                         }`}
                       >
-                        <Icon className={`w-3.5 h-3.5 ${isActive ? "text-primary" : ""}`} />
+                        <Icon
+                          className={`w-3.5 h-3.5 ${
+                            isActive ? "text-primary" : ""
+                          }`}
+                        />
                         {tab.label}
                       </button>
                     );

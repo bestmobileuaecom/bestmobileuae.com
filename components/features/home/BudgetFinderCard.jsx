@@ -85,44 +85,38 @@ export default function BudgetFinderCard() {
   const hasFilters = !!(budget || priority || brand);
 
   return (
-    <section className="py-4 md:py-6">
+    <section className="py-6 md:py-8">
       <div className="container mx-auto px-4">
         <div className="max-w-7xl mx-auto">
-          {/* Card box */}
-          <div className="rounded-2xl border border-border bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60 shadow-sm">
-            {/* Header */}
-            <div className="flex items-start justify-between gap-3 p-4 md:p-5 border-b border-border/70">
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <SlidersHorizontal className="w-4.5 h-4.5 text-primary" />
+          {/* Card Container - Consistent with other sections */}
+          <div className="bg-card border border-border/60 rounded-2xl shadow-sm overflow-hidden">
+            <div className="p-5 md:p-6">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 flex items-center justify-center bg-primary/10 rounded-xl">
+                    <SlidersHorizontal className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-foreground">Quick Phone Finder</h2>
+                    <p className="text-sm text-muted-foreground">Pick a budget + what matters most</p>
+                  </div>
                 </div>
 
-                <div>
-                  <h2 className="text-base md:text-lg font-semibold leading-tight">
-                    Quick Phone Finder
-                  </h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Pick a budget + what matters most — we’ll show the best options.
-                  </p>
-                </div>
+                {/* Reset */}
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  disabled={!hasFilters}
+                  className="inline-flex items-center gap-2 text-sm px-3 py-2 rounded-xl border border-border hover:bg-muted/40 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Reset
+                </button>
               </div>
 
-              {/* Reset (optional) */}
-              <button
-                type="button"
-                onClick={handleReset}
-                disabled={!hasFilters}
-                className="inline-flex items-center gap-2 text-sm px-3 py-2 rounded-xl border border-border
-                           hover:bg-muted/40 disabled:opacity-50 disabled:cursor-not-allowed transition"
-              >
-                <RotateCcw className="w-4 h-4" />
-                Reset
-              </button>
-            </div>
-
-            {/* Filters */}
-            <div className="p-4 md:p-5">
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+              {/* Filters */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                 <div className="md:col-span-4">
                   <SelectDropdown
                     label="Budget"
@@ -151,17 +145,15 @@ export default function BudgetFinderCard() {
                 </div>
 
                 {/* CTA row */}
-                <div className="md:col-span-12 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between mt-1">
+                <div className="md:col-span-12 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between pt-2">
                   <p className="text-xs text-muted-foreground">
-                    Tip: leave Brand as “Any” to see best value phones in your budget.
+                    Tip: leave Brand as "Any" to see best value phones in your budget.
                   </p>
 
                   <button
                     type="button"
                     onClick={handleFind}
-                    className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl
-                               bg-primary text-primary-foreground text-sm font-medium
-                               hover:bg-primary/90 transition"
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all shadow-sm hover:shadow-md"
                   >
                     Find Phones
                     <ArrowRight className="w-4 h-4" />
@@ -170,7 +162,6 @@ export default function BudgetFinderCard() {
               </div>
             </div>
           </div>
-          {/* end card */}
         </div>
       </div>
     </section>

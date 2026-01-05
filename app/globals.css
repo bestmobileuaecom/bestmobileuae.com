@@ -175,6 +175,11 @@
   }
 }
 
+/* Display Font Utility */
+.font-display {
+  font-family: var(--font-display), system-ui, sans-serif;
+}
+
 /* Custom Scrollbar */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
