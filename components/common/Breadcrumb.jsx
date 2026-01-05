@@ -28,7 +28,7 @@ export default function Breadcrumb({ phone }) {
             <li className="flex items-center">
               <ChevronRight className="w-3.5 h-3.5 text-gray-400 mx-0.5" />
               <Link
-                href="/phones?brand=samsung"
+                href={`/phones?brand=${encodeURIComponent(phone.brand.toLowerCase())}`}
                 className="px-2 py-1 rounded-md text-gray-600 hover:text-blue-600 hover:bg-blue-50/50 transition-all duration-200"
               >
                 {phone.brand}
