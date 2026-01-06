@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Star, Zap, TrendingUp, Shield } from "lucide-react";
+import { ArrowRight, Star, Zap, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -121,77 +121,59 @@ export default function Hero({ trendingPhones = [] }) {
             </div>
 
             <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 md:p-10">
-              {/* Left: Headline & CTA */}
-              <div className="flex flex-col justify-center">
-                {/* Badge */}
-                <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-3 py-1.5 w-fit mb-4">
-                  <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                  <span className="text-xs font-medium text-primary">
-                    UAE's #1 Phone Price Comparison
-                  </span>
+              {/* Left: Headline & CTA - Balanced Design */}
+              <div className="flex flex-col justify-center py-4 lg:py-6">
+                {/* Small Badge */}
+                <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground mb-4">
+                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                  <span>Trusted by thousands in UAE</span>
                 </div>
 
                 {/* Headline */}
-                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground leading-tight mb-4">
-                  Find the <span className="text-primary">Best Phone</span>
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight mb-4">
+                  Find Your
                   <br />
-                  at the Best Price
+                  <span className="text-primary">Perfect Phone</span>
                 </h1>
 
-                {/* Subheadline */}
+                {/* Short Subheadline */}
                 <p className="text-base md:text-lg text-muted-foreground mb-6 max-w-md">
-                  Compare prices from 50+ UAE retailers. Get expert reviews and
-                  make smarter buying decisions.
+                  Expert reviews, detailed comparisons & honest ratings to help you choose the right phone.
                 </p>
 
-                {/* Stats Row */}
-                <div className="flex flex-wrap items-center gap-4 md:gap-6 mb-6">
-                  <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 flex items-center justify-center bg-emerald-500/10 rounded-xl">
-                      <TrendingUp className="w-5 h-5 text-emerald-500" />
-                    </div>
-                    <div>
-                      <p className="text-lg font-bold text-foreground">
-                        1,200+
-                      </p>
-                      <p className="text-xs text-muted-foreground">Phones</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 flex items-center justify-center bg-blue-500/10 rounded-xl">
-                      <Shield className="w-5 h-5 text-blue-500" />
-                    </div>
-                    <div>
-                      <p className="text-lg font-bold text-foreground">50+</p>
-                      <p className="text-xs text-muted-foreground">Retailers</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 flex items-center justify-center bg-amber-500/10 rounded-xl">
-                      <Star className="w-5 h-5 text-amber-500" />
-                    </div>
-                    <div>
-                      <p className="text-lg font-bold text-foreground">Daily</p>
-                      <p className="text-xs text-muted-foreground">Updates</p>
-                    </div>
-                  </div>
-                </div>
-
                 {/* CTA Buttons */}
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-3 mb-6">
                   <Link
                     href="/phones"
-                    className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition-all shadow-md hover:shadow-lg"
+                    className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3.5 rounded-xl font-semibold hover:opacity-90 transition-all shadow-md hover:shadow-lg"
                   >
-                    Browse All Phones
+                    Explore Phones
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                   <Link
                     href="/compare"
-                    className="inline-flex items-center gap-2 bg-background border border-border hover:border-primary/50 text-foreground px-6 py-3 rounded-xl font-semibold transition-all"
+                    className="inline-flex items-center gap-2 bg-background border border-border hover:border-primary/50 text-foreground px-6 py-3.5 rounded-xl font-semibold transition-all"
                   >
-                    Compare Phones
+                    Compare
                   </Link>
+                </div>
+
+                {/* Minimal Stats */}
+                <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-semibold text-foreground">1,200+</span>
+                    <span>Phones</span>
+                  </div>
+                  <div className="w-1 h-1 rounded-full bg-border" />
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-semibold text-foreground">Expert</span>
+                    <span>Reviews</span>
+                  </div>
+                  <div className="w-1 h-1 rounded-full bg-border" />
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-semibold text-foreground">Daily</span>
+                    <span>Updates</span>
+                  </div>
                 </div>
               </div>
 

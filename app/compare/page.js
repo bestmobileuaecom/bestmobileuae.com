@@ -8,6 +8,7 @@ import {
   Cpu,
   GitCompare,
   Monitor,
+  Plus,
   RotateCcw,
   Star,
   Zap,
@@ -77,17 +78,17 @@ export default function ComparePage() {
   return (
     <div className="min-h-screen bg-linear-to-b from-background via-background to-muted/20">
       <section className="bg-linear-to-br from-primary/5 via-background to-accent/5 border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 flex items-center justify-center bg-primary/10 rounded-xl">
-                <GitCompare className="w-5 h-5 text-primary" />
+        <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8 md:py-12">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center bg-primary/10 rounded-xl shrink-0">
+                <GitCompare className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               </div>
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">
                   Compare Phones
                 </h1>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground hidden xs:block">
                   Find the best phone for your needs
                 </p>
               </div>
@@ -96,58 +97,84 @@ export default function ComparePage() {
             {hasPhones && (
               <Button
                 variant="outline"
+                size="sm"
                 onClick={resetComparison}
-                className="hidden sm:flex items-center gap-2"
+                className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
               >
-                <RotateCcw className="w-4 h-4" />
-                Reset
+                <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span className="hidden xs:inline">Reset</span>
               </Button>
             )}
           </div>
         </div>
       </section>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
         {canCompare && (
           <WinnerSummary phones={selectedPhones} verdict={verdict} />
         )}
 
-        <div
-          className={`grid gap-4 mb-8 ${
-            selectedPhones.length <= 2
-              ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 max-w-3xl mx-auto"
-              : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-          }`}
-        >
-          {[0, 1, 2]
-            .slice(0, Math.max(selectedPhones.length + 1, 2))
-            .map((index) => {
-              const phone = selectedPhones[index];
-              if (phone) {
-                return (
-                  <CompareCard
-                    key={phone.id}
-                    phone={phone}
-                    onRemove={() => removePhone(index)}
-                    isWinner={index === winnerIndex}
-                  />
-                );
-              }
-              if (index < 3) {
-                return (
-                  <EmptySlot
-                    key={index}
-                    slotNumber={index + 1}
-                    onAdd={() => openSelector(index)}
-                  />
-                );
-              }
-              return null;
-            })}
+        {/* Phone Cards Grid - 2 default slots */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4 max-w-2xl lg:max-w-3xl mx-auto">
+          {[0, 1].map((index) => {
+            const phone = selectedPhones[index];
+            if (phone) {
+              return (
+                <CompareCard
+                  key={`phone-${index}-${phone.id}`}
+                  phone={phone}
+                  onRemove={() => removePhone(index)}
+                  isWinner={index === winnerIndex}
+                />
+              );
+            }
+            return (
+              <EmptySlot
+                key={`empty-${index}`}
+                slotNumber={index + 1}
+                onAdd={() => openSelector(index)}
+              />
+            );
+          })}
         </div>
 
+        {/* Extra phones (3rd, 4th) - shown only when added */}
+        {selectedPhones.length > 2 && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 max-w-4xl mx-auto">
+            {selectedPhones.slice(2).map((phone, idx) => (
+              <CompareCard
+                key={`extra-${idx}-${phone.id}`}
+                phone={phone}
+                onRemove={() => removePhone(idx + 2)}
+                isWinner={idx + 2 === winnerIndex}
+                isCompact
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Add more phones button - subtle, optional */}
+        {selectedPhones.length >= 2 && selectedPhones.length < 4 && (
+          <div className="flex justify-center mb-6 sm:mb-8">
+            <button
+              type="button"
+              onClick={() => openSelector(selectedPhones.length)}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground bg-muted/30 hover:bg-muted/50 rounded-full border border-dashed border-border/60 hover:border-primary/40 transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add phone {selectedPhones.length + 1}</span>
+              <span className="text-xs opacity-60">(optional)</span>
+            </button>
+          </div>
+        )}
+
+        {/* Spacer when no extra buttons */}
+        {(selectedPhones.length < 2 || selectedPhones.length >= 4) && (
+          <div className="mb-6 sm:mb-8" />
+        )}
+
         {canCompare && (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <CompareSection title="Overview" icon={Zap} defaultOpen={true}>
               <CompareRow
                 label="Overall Score"
@@ -301,24 +328,24 @@ export default function ComparePage() {
         )}
 
         {!canCompare && (
-          <div className="text-center py-12 bg-card rounded-2xl border border-border">
-            <GitCompare className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
+          <div className="text-center py-8 sm:py-12 bg-card rounded-xl sm:rounded-2xl border border-border">
+            <GitCompare className="w-12 h-12 sm:w-16 sm:h-16 text-muted-foreground/30 mx-auto mb-3 sm:mb-4" />
+            <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2">
               {hasPhones
                 ? "Add one more phone to compare"
                 : "Select phones to compare"}
             </h3>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            <p className="text-sm text-muted-foreground mb-4 sm:mb-6 max-w-md mx-auto px-4">
               {hasPhones
-                ? "You need at least 2 phones to start comparing. Add another phone above."
-                : "Click the slots above to add phones for comparison. You can compare up to 3 phones at once."}
+                ? "You need at least 2 phones to start comparing."
+                : "Click the slots above to add phones for comparison. Compare up to 3 phones."}
             </p>
 
-            <div className="mt-8 max-w-xl mx-auto">
-              <p className="text-sm font-medium text-muted-foreground mb-4">
+            <div className="mt-6 sm:mt-8 max-w-xl mx-auto px-4">
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-3 sm:mb-4">
                 Popular Comparisons
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                 {[
                   {
                     phones: ["iPhone 15 Pro Max", "Samsung Galaxy S24 Ultra"],
@@ -348,12 +375,12 @@ export default function ComparePage() {
                         setSelectedPhones(phones);
                       }
                     }}
-                    className="flex items-center justify-between p-3 bg-muted/30 hover:bg-muted/50 rounded-xl transition-colors text-left"
+                    className="flex items-center justify-between p-2.5 sm:p-3 bg-muted/30 hover:bg-muted/50 rounded-lg sm:rounded-xl transition-colors text-left group"
                   >
-                    <span className="text-sm text-foreground">
+                    <span className="text-xs sm:text-sm text-foreground line-clamp-1">
                       {comparison.phones[0]} vs {comparison.phones[1]}
                     </span>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                    <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
                   </button>
                 ))}
               </div>
