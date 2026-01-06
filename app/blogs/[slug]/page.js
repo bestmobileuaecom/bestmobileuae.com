@@ -1,23 +1,26 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Calendar, Clock, Tag, Newspaper } from "lucide-react";
-import { getArticleBySlug, allArticles } from "@/lib/blogs-data";
+import { getArticleBySlug, getPublishedArticles } from "@/lib/data/articles";
 import { notFound } from "next/navigation";
-
-export async function generateStaticParams() {
-  return allArticles.map((article) => ({
-    slug: article.slug,
-  }));
-}
+import ReactMarkdown from "react-markdown";
+import PublicLayout from "@/components/common/PublicLayout";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const article = getArticleBySlug(slug);
+  
+  let article = null;
+  try {
+    article = await getArticleBySlug(slug, true);
+  } catch (e) {
+    // Error fetching article
+  }
+  
   if (!article) return { title: "Article Not Found" };
 
   return {
-    title: `${article.title} | Best Mobile UAE`,
-    description: article.excerpt,
+    title: `${article.metaTitle || article.title} | Best Mobile UAE`,
+    description: article.metaDescription || article.excerpt,
     openGraph: {
       title: article.title,
       description: article.excerpt,
@@ -27,18 +30,37 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function ArticlePage({ params }) {
+export default async function ArticlePage({ params, searchParams }) {
   const { slug } = await params;
-  const article = getArticleBySlug(slug);
-
+  const { preview } = await searchParams;
+  const includePreview = preview === "true";
+  
+  let article = null;
+  let otherArticles = [];
+  
+  try {
+    article = await getArticleBySlug(slug, includePreview);
+    const allDbArticles = await getPublishedArticles({ limit: 5 });
+    otherArticles = allDbArticles.filter((a) => a.slug !== slug).slice(0, 4);
+  } catch (e) {
+    console.error("Error fetching article:", e);
+  }
+  
   if (!article) {
     notFound();
   }
 
-  // Get other articles excluding current one
-  const otherArticles = allArticles.filter((a) => a.slug !== slug).slice(0, 4);
+  // Format date
+  const formattedDate = article.date 
+    ? new Date(article.date).toLocaleDateString("en-AE", { 
+        year: "numeric", 
+        month: "long", 
+        day: "numeric" 
+      })
+    : "";
 
   return (
+    <PublicLayout>
     <div className="min-h-screen bg-linear-to-b from-background via-background to-muted/20 pb-12">
       {/* Header */}
       <section className="bg-linear-to-br from-primary/5 via-background to-accent/5 border-b border-border">
@@ -62,7 +84,7 @@ export default async function ArticlePage({ params }) {
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
-              {article.date}
+              {formattedDate}
             </span>
             <span className="flex items-center gap-1">
               <Clock className="w-4 h-4" />
@@ -89,20 +111,20 @@ export default async function ArticlePage({ params }) {
 
             {/* Article Body */}
             <div className="bg-card border border-border/60 rounded-2xl shadow-sm p-6 md:p-8">
-              <div className="prose prose-neutral dark:prose-invert max-w-none">
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  {article.excerpt}
-                </p>
-                <hr className="my-6 border-border" />
-                <p className="text-muted-foreground leading-relaxed">
-                  This is a demo article. Full content would appear here with
-                  detailed information about {article.title.toLowerCase()}.
-                </p>
-                <p className="text-muted-foreground leading-relaxed">
-                  Stay tuned for more updates and reviews from Best Mobile UAE.
-                  We're committed to bringing you the latest smartphone news and
-                  helping you find the best deals in the UAE market.
-                </p>
+              <div className="prose prose-neutral dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-a:text-primary prose-strong:text-foreground prose-ul:text-muted-foreground prose-ol:text-muted-foreground prose-table:text-sm">
+                {article.content ? (
+                  <ReactMarkdown>{article.content}</ReactMarkdown>
+                ) : (
+                  <>
+                    <p className="text-lg text-muted-foreground leading-relaxed">
+                      {article.excerpt}
+                    </p>
+                    <hr className="my-6 border-border" />
+                    <p className="text-muted-foreground leading-relaxed">
+                      Full article content coming soon.
+                    </p>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -155,5 +177,6 @@ export default async function ArticlePage({ params }) {
         </div>
       </div>
     </div>
+    </PublicLayout>
   );
 }

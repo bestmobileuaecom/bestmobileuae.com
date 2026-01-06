@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowRight,
   Battery,
@@ -14,18 +15,117 @@ import {
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getPhoneBySlug, generateComparisonVerdict } from "@/lib/phones-data";
 import PhoneSelector from "@/components/features/compare/PhoneSelector";
 import EmptySlot from "@/components/features/compare/EmptySlot";
 import CompareCard from "@/components/features/compare/CompareCard";
 import WinnerSummary from "@/components/features/compare/WinnerSummary";
 import CompareSection from "@/components/features/compare/CompareSection";
 import CompareRow from "@/components/features/compare/CompareRow";
+import PublicLayout from "@/components/common/PublicLayout";
+
+// Generate comparison verdict based on phone scores
+function generateComparisonVerdict(phones) {
+  if (phones.length < 2) return null;
+
+  const categories = ["camera", "battery", "performance", "display", "value"];
+  const verdict = {};
+
+  for (const category of categories) {
+    let winnerPhone = null;
+    let maxScore = -1;
+
+    for (const phone of phones) {
+      const score = phone.scores?.[category] || 0;
+      if (score > maxScore) {
+        maxScore = score;
+        winnerPhone = phone;
+      }
+    }
+
+    verdict[category] = { 
+      winner: winnerPhone?.name || winnerPhone?.slug, 
+      winnerSlug: winnerPhone?.slug,
+      score: maxScore 
+    };
+  }
+
+  // Overall winner by total score
+  let overallWinnerPhone = null;
+  let maxTotal = -1;
+
+  for (const phone of phones) {
+    const total = categories.reduce(
+      (sum, cat) => sum + (phone.scores?.[cat] || 0),
+      0
+    );
+    if (total > maxTotal) {
+      maxTotal = total;
+      overallWinnerPhone = phone;
+    }
+  }
+
+  // Generate reason based on category wins
+  const categoryWinCount = categories.filter(
+    cat => verdict[cat]?.winnerSlug === overallWinnerPhone?.slug
+  ).length;
+  
+  let reason = "";
+  if (categoryWinCount >= 4) {
+    reason = "Dominates in almost every category";
+  } else if (categoryWinCount >= 3) {
+    reason = "Wins in most key categories";
+  } else {
+    reason = "Best overall balance of features and value";
+  }
+
+  verdict.overall = { 
+    winnerSlug: overallWinnerPhone?.slug,
+    winner: overallWinnerPhone?.name,
+    reason,
+    totalScore: maxTotal
+  };
+
+  return verdict;
+}
 
 export default function ComparePage() {
+  const searchParams = useSearchParams();
+  const phonesParam = searchParams.get("phones");
+  
   const [selectedPhones, setSelectedPhones] = useState([]);
+  const [allPhones, setAllPhones] = useState([]);
   const [selectorOpen, setSelectorOpen] = useState(false);
   const [currentSlot, setCurrentSlot] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch all phones for selector and pre-select from URL params
+  useEffect(() => {
+    async function fetchPhones() {
+      try {
+        const res = await fetch("/api/phones");
+        const data = await res.json();
+        if (data.phones) {
+          setAllPhones(data.phones);
+          
+          // Check for phones in URL query params (e.g., ?phones=slug1,slug2)
+          if (phonesParam) {
+            const slugs = phonesParam.split(",").filter(Boolean);
+            const preSelectedPhones = slugs
+              .map(slug => data.phones.find(p => p.slug === slug))
+              .filter(Boolean);
+            if (preSelectedPhones.length > 0) {
+              setSelectedPhones(preSelectedPhones);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching phones:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPhones();
+  }, [phonesParam]);
 
   const openSelector = (slotIndex) => {
     setCurrentSlot(slotIndex);
@@ -36,6 +136,7 @@ export default function ComparePage() {
     const newPhones = [...selectedPhones];
     newPhones[currentSlot] = phone;
     setSelectedPhones(newPhones);
+    setSelectorOpen(false);
   };
 
   const removePhone = (index) => {
@@ -75,7 +176,40 @@ export default function ComparePage() {
     return verdict[category].winner;
   };
 
+  // Get spec value helper
+  const getSpecValue = (phone, ...keys) => {
+    if (!phone?.specs) return null;
+    const specs = phone.specs;
+    for (const key of keys) {
+      const lowerKey = key.toLowerCase();
+      const upperKey = key.charAt(0).toUpperCase() + key.slice(1);
+      if (specs[key]) {
+        if (typeof specs[key] === "object") {
+          // Return first value from nested object
+          const values = Object.values(specs[key]);
+          return values[0];
+        }
+        return specs[key];
+      }
+      if (specs[lowerKey]) return typeof specs[lowerKey] === "object" ? Object.values(specs[lowerKey])[0] : specs[lowerKey];
+      if (specs[upperKey]) return typeof specs[upperKey] === "object" ? Object.values(specs[upperKey])[0] : specs[upperKey];
+    }
+    return null;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-linear-to-b from-background via-background to-muted/20 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading phones...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
+    <PublicLayout>
     <div className="min-h-screen bg-linear-to-b from-background via-background to-muted/20">
       <section className="bg-linear-to-br from-primary/5 via-background to-accent/5 border-b border-border">
         <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8 md:py-12">
@@ -200,12 +334,6 @@ export default function ComparePage() {
                 phones={selectedPhones}
                 type="text"
               />
-              <CompareRow
-                label="Release Date"
-                values={getValues("releaseDate")}
-                phones={selectedPhones}
-                type="text"
-              />
             </CompareSection>
 
             <CompareSection
@@ -215,19 +343,19 @@ export default function ComparePage() {
             >
               <CompareRow
                 label="Processor"
-                values={getValues((p) => p.specs?.processor)}
+                values={getValues((p) => getSpecValue(p, "Performance", "Processor") || getSpecValue(p, "processor"))}
                 phones={selectedPhones}
                 type="text"
               />
               <CompareRow
                 label="RAM"
-                values={getValues((p) => p.specs?.ram)}
+                values={getValues((p) => p.specs?.Performance?.RAM || p.specs?.RAM || p.specs?.ram)}
                 phones={selectedPhones}
                 type="text"
               />
               <CompareRow
                 label="Storage"
-                values={getValues((p) => p.specs?.storage)}
+                values={getValues((p) => p.specs?.Performance?.Storage || p.specs?.Storage || p.specs?.storage)}
                 phones={selectedPhones}
                 type="text"
               />
@@ -247,8 +375,20 @@ export default function ComparePage() {
               categoryWinner={getCategoryWinner("display")}
             >
               <CompareRow
-                label="Display"
-                values={getValues((p) => p.specs?.display)}
+                label="Size"
+                values={getValues((p) => p.specs?.Display?.Size || p.specs?.display?.Size || p.specs?.display?.size)}
+                phones={selectedPhones}
+                type="text"
+              />
+              <CompareRow
+                label="Type"
+                values={getValues((p) => p.specs?.Display?.Type || p.specs?.display?.Type || p.specs?.display?.type)}
+                phones={selectedPhones}
+                type="text"
+              />
+              <CompareRow
+                label="Refresh Rate"
+                values={getValues((p) => p.specs?.Display?.["Refresh Rate"] || p.specs?.display?.["Refresh Rate"])}
                 phones={selectedPhones}
                 type="text"
               />
@@ -269,7 +409,13 @@ export default function ComparePage() {
             >
               <CompareRow
                 label="Main Camera"
-                values={getValues((p) => p.specs?.camera)}
+                values={getValues((p) => p.specs?.Camera?.Main || p.specs?.camera?.Main || p.specs?.camera?.main)}
+                phones={selectedPhones}
+                type="text"
+              />
+              <CompareRow
+                label="Front Camera"
+                values={getValues((p) => p.specs?.Camera?.Front || p.specs?.camera?.Front || p.specs?.camera?.front)}
                 phones={selectedPhones}
                 type="text"
               />
@@ -289,14 +435,14 @@ export default function ComparePage() {
               categoryWinner={getCategoryWinner("battery")}
             >
               <CompareRow
-                label="Battery"
-                values={getValues((p) => p.specs?.battery)}
+                label="Capacity"
+                values={getValues((p) => p.specs?.Battery?.Capacity || p.specs?.battery?.Capacity || p.specs?.battery?.capacity)}
                 phones={selectedPhones}
                 type="text"
               />
               <CompareRow
                 label="Charging"
-                values={getValues((p) => p.specs?.charging)}
+                values={getValues((p) => p.specs?.Battery?.Charging || p.specs?.battery?.Charging || p.specs?.battery?.charging)}
                 phones={selectedPhones}
                 type="text"
               />
@@ -338,53 +484,37 @@ export default function ComparePage() {
             <p className="text-sm text-muted-foreground mb-4 sm:mb-6 max-w-md mx-auto px-4">
               {hasPhones
                 ? "You need at least 2 phones to start comparing."
-                : "Click the slots above to add phones for comparison. Compare up to 3 phones."}
+                : "Click the slots above to add phones for comparison. Compare up to 4 phones."}
             </p>
 
-            <div className="mt-6 sm:mt-8 max-w-xl mx-auto px-4">
-              <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-3 sm:mb-4">
-                Popular Comparisons
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                {[
-                  {
-                    phones: ["iPhone 15 Pro Max", "Samsung Galaxy S24 Ultra"],
-                    slugs: ["iphone-15-pro-max", "samsung-galaxy-s24-ultra"],
-                  },
-                  {
-                    phones: ["Google Pixel 8 Pro", "iPhone 15 Pro Max"],
-                    slugs: ["google-pixel-8-pro", "iphone-15-pro-max"],
-                  },
-                  {
-                    phones: ["Samsung Galaxy A55", "Nothing Phone (2a)"],
-                    slugs: ["samsung-galaxy-a55-5g", "nothing-phone-2a"],
-                  },
-                  {
-                    phones: ["OnePlus 12", "Xiaomi 14 Pro"],
-                    slugs: ["oneplus-12", "xiaomi-14-pro"],
-                  },
-                ].map((comparison, idx) => (
-                  <button
-                    type="button"
-                    key={idx}
-                    onClick={() => {
-                      const phones = comparison.slugs
-                        .map((slug) => getPhoneBySlug(slug))
-                        .filter(Boolean);
-                      if (phones.length >= 2) {
-                        setSelectedPhones(phones);
-                      }
-                    }}
-                    className="flex items-center justify-between p-2.5 sm:p-3 bg-muted/30 hover:bg-muted/50 rounded-lg sm:rounded-xl transition-colors text-left group"
-                  >
-                    <span className="text-xs sm:text-sm text-foreground line-clamp-1">
-                      {comparison.phones[0]} vs {comparison.phones[1]}
-                    </span>
-                    <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
-                  </button>
-                ))}
+            {allPhones.length >= 2 && (
+              <div className="mt-6 sm:mt-8 max-w-xl mx-auto px-4">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-3 sm:mb-4">
+                  Quick Compare
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                  {/* Show first 4 phones as quick options */}
+                  {allPhones.slice(0, 4).map((phone) => (
+                    <button
+                      type="button"
+                      key={phone.id}
+                      onClick={() => {
+                        if (selectedPhones.length < 4 && !selectedPhones.find(p => p.slug === phone.slug)) {
+                          setSelectedPhones([...selectedPhones, phone]);
+                        }
+                      }}
+                      disabled={selectedPhones.find(p => p.slug === phone.slug)}
+                      className="flex items-center justify-between p-2.5 sm:p-3 bg-muted/30 hover:bg-muted/50 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg sm:rounded-xl transition-colors text-left group"
+                    >
+                      <span className="text-xs sm:text-sm text-foreground line-clamp-1">
+                        {phone.name}
+                      </span>
+                      <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground group-hover:text-primary shrink-0 ml-2" />
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
       </div>
@@ -394,7 +524,9 @@ export default function ComparePage() {
         onClose={() => setSelectorOpen(false)}
         onSelect={handleSelectPhone}
         excludeSlugs={excludeSlugs}
+        phones={allPhones}
       />
     </div>
+    </PublicLayout>
   );
 }

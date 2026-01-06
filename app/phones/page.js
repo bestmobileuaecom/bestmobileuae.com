@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import PhonesClient from "./PhonesClient";
+import PublicLayout from "@/components/common/PublicLayout";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://bestmobileuae.com";
 
@@ -35,8 +36,10 @@ function LoadingFallback() {
 
 export default function PhonesPage() {
   return (
-    <Suspense fallback={<LoadingFallback />}>
-      <PhonesClient />
-    </Suspense>
+    <PublicLayout>
+      <Suspense fallback={<LoadingFallback />}>
+        <PhonesClient />
+      </Suspense>
+    </PublicLayout>
   );
 }

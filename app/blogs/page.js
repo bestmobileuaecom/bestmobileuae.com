@@ -1,4 +1,5 @@
 import BlogsClient from "./BlogsClient";
+import PublicLayout from "@/components/common/PublicLayout";
 
 export const metadata = {
   title: "News & Reviews | Best Mobile UAE",
@@ -13,5 +14,9 @@ export const metadata = {
 };
 
 export default function BlogsPage() {
-  return <BlogsClient />;
+  return (
+    <PublicLayout>
+      <BlogsClient />
+    </PublicLayout>
+  );
 }

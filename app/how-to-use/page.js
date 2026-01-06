@@ -5,6 +5,7 @@ import {
   ShoppingCart,
   Star,
 } from "lucide-react";
+import PublicLayout from "@/components/common/PublicLayout";
 
 export const metadata = {
   title: "How to Use | Best Mobile UAE",
@@ -47,7 +48,8 @@ const steps = [
 
 export default function HowToUsePage() {
   return (
-    <div className="min-h-screen bg-linear-to-b from-background via-background to-muted/20 pb-12">
+    <PublicLayout>
+      <div className="min-h-screen bg-linear-to-b from-background via-background to-muted/20 pb-12">
       {/* Header */}
       <section className="bg-linear-to-br from-primary/5 via-background to-accent/5 border-b border-border">
         <div className="max-w-4xl mx-auto px-4 py-8 md:py-12">
@@ -115,5 +117,6 @@ export default function HowToUsePage() {
         </div>
       </div>
     </div>
+    </PublicLayout>
   );
 }

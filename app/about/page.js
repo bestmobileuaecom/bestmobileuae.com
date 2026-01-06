@@ -1,4 +1,5 @@
 import { Info, Users, Shield, Target } from "lucide-react";
+import PublicLayout from "@/components/common/PublicLayout";
 
 export const metadata = {
   title: "About Us | Best Mobile UAE",
@@ -33,7 +34,8 @@ const values = [
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-linear-to-b from-background via-background to-muted/20 pb-12">
+    <PublicLayout>
+      <div className="min-h-screen bg-linear-to-b from-background via-background to-muted/20 pb-12">
       {/* Header */}
       <section className="bg-linear-to-br from-primary/5 via-background to-accent/5 border-b border-border">
         <div className="max-w-4xl mx-auto px-4 py-8 md:py-12">
@@ -110,5 +112,6 @@ export default function AboutPage() {
         </div>
       </div>
     </div>
+    </PublicLayout>
   );
 }

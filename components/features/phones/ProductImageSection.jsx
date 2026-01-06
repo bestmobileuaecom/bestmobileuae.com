@@ -4,12 +4,27 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Heart, Share2, Check } from "lucide-react";
+import { isPhoneLiked, togglePhoneLike } from "@/lib/favorites";
 
 export default function ProductImageSection({ phone }) {
   const [liked, setLiked] = useState(false);
   const [showCopied, setShowCopied] = useState(false);
+
+  // Check cookie for like status on mount
+  useEffect(() => {
+    if (phone?.slug) {
+      setLiked(isPhoneLiked(phone.slug));
+    }
+  }, [phone?.slug]);
+
+  const handleLike = () => {
+    if (phone?.slug) {
+      const newStatus = togglePhoneLike(phone.slug);
+      setLiked(newStatus);
+    }
+  };
 
   const handleShare = async () => {
     try {
@@ -52,7 +67,7 @@ export default function ProductImageSection({ phone }) {
           </button>
           <button
             type="button"
-            onClick={() => setLiked((v) => !v)}
+            onClick={handleLike}
             className={`h-8 w-8 md:h-9 md:w-9 flex items-center justify-center rounded-full backdrop-blur-sm border active:scale-95 transition-all ${
               liked
                 ? "bg-primary/10 border-primary/30 text-primary"

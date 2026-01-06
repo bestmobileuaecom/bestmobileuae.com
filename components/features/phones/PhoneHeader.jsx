@@ -87,7 +87,7 @@ export default function ProductHeader({ phone }) {
             <div className="flex-1 min-h-1 md:min-h-2" />
 
             {/* Price Section with CTAs */}
-            <PriceSection priceRange={priceRange} bestDeal={bestDeal} />
+            <PriceSection priceRange={priceRange} bestDeal={bestDeal} phoneSlug={phone.slug} />
           </div>
         </div>
       </div>

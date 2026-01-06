@@ -98,35 +98,55 @@ export default function WinnerSummary({ phones, verdict }) {
           Quick Decision Helper
         </h4>
         <div className="grid grid-cols-1 gap-3">
-          {phones.slice(0, 2).map((phone) => (
-            <div
-              key={phone.id}
-              className="bg-muted/30 hover:bg-muted/40 rounded-lg p-3 sm:p-4 border border-border/50 transition-colors"
-            >
-              <p className="font-semibold text-foreground mb-2 text-sm sm:text-base">
-                Choose <span className="text-primary">{phone.name}</span> if you want:
-              </p>
-              <ul className="space-y-1 sm:space-y-1.5">
-                {phone.bestFor?.slice(0, 3).map((reason, idx) => (
-                  <li key={idx} className="flex items-center gap-2 text-xs sm:text-sm">
-                    <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0" />
-                    <span className="text-muted-foreground capitalize">
-                      {reason.replace(/-/g, " ")}
-                    </span>
-                  </li>
-                ))}
-                {phone.pros?.slice(0, 2).map((pro, idx) => (
-                  <li
-                    key={`pro-${idx}`}
-                    className="flex items-center gap-2 text-xs sm:text-sm"
-                  >
-                    <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0" />
-                    <span className="text-muted-foreground">{pro}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {phones.slice(0, 2).map((phone) => {
+            // Get reasons to choose this phone
+            const reasons = [];
+            
+            // Add pros if available
+            if (phone.pros && phone.pros.length > 0) {
+              reasons.push(...phone.pros.slice(0, 3));
+            }
+            
+            // Add bestFor if available
+            if (phone.bestFor && phone.bestFor.length > 0) {
+              for (const reason of phone.bestFor.slice(0, 3 - reasons.length)) {
+                reasons.push(reason.replace(/-/g, " "));
+              }
+            }
+            
+            // Fallback to generated reasons based on scores
+            if (reasons.length === 0) {
+              if (phone.scores?.camera >= 8) reasons.push("Excellent camera quality");
+              if (phone.scores?.battery >= 8) reasons.push("Long-lasting battery life");
+              if (phone.scores?.performance >= 8) reasons.push("Top-tier performance");
+              if (phone.scores?.value >= 8) reasons.push("Great value for money");
+              if (phone.scores?.display >= 8) reasons.push("Stunning display");
+            }
+            
+            // If still no reasons, add generic ones
+            if (reasons.length === 0) {
+              reasons.push("Solid all-round performance");
+            }
+            
+            return (
+              <div
+                key={phone.id}
+                className="bg-muted/30 hover:bg-muted/40 rounded-lg p-3 sm:p-4 border border-border/50 transition-colors"
+              >
+                <p className="font-semibold text-foreground mb-2 text-sm sm:text-base">
+                  Choose <span className="text-primary">{phone.name}</span> if you want:
+                </p>
+                <ul className="space-y-1 sm:space-y-1.5">
+                  {reasons.slice(0, 3).map((reason, idx) => (
+                    <li key={idx} className="flex items-center gap-2 text-xs sm:text-sm">
+                      <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0" />
+                      <span className="text-muted-foreground">{reason}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

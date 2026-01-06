@@ -28,13 +28,37 @@ export function TrustSignals({ signals }) {
   );
 }
 
+// Helper to safely get string value from possibly nested spec
+function getSpecValue(value, fallbackKeys = []) {
+  // If it's already a string, return it
+  if (typeof value === 'string') return value;
+  // If it's an object, try to get a nested value
+  if (value && typeof value === 'object') {
+    // Try common keys
+    for (const key of ['Size', 'size', 'Type', 'type', 'Capacity', 'capacity', 'Main', 'main', ...fallbackKeys]) {
+      if (typeof value[key] === 'string') return value[key];
+    }
+    // Return first string value found
+    for (const v of Object.values(value)) {
+      if (typeof v === 'string') return v;
+    }
+  }
+  return null;
+}
+
 // Quick Specs Component
 export function QuickSpecs({ specs }) {
+  // Get spec values, handling both flat strings and nested objects
+  const displayVal = getSpecValue(specs?.display) || getSpecValue(specs?.Display);
+  const processorVal = getSpecValue(specs?.processor) || getSpecValue(specs?.Processor) || getSpecValue(specs?.Performance);
+  const batteryVal = getSpecValue(specs?.battery) || getSpecValue(specs?.Battery);
+  const cameraVal = getSpecValue(specs?.camera) || getSpecValue(specs?.Camera);
+
   const quickSpecs = [
-    specs?.display && { icon: Smartphone, label: specs.display },
-    specs?.processor && { icon: Cpu, label: specs.processor },
-    specs?.battery && { icon: Battery, label: specs.battery },
-    specs?.camera && { icon: Camera, label: specs.camera },
+    displayVal && { icon: Smartphone, label: displayVal },
+    processorVal && { icon: Cpu, label: processorVal },
+    batteryVal && { icon: Battery, label: batteryVal },
+    cameraVal && { icon: Camera, label: cameraVal },
   ].filter(Boolean);
 
   if (!quickSpecs.length) return null;

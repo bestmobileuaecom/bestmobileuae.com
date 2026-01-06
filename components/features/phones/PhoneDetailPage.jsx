@@ -1,6 +1,7 @@
 import PhoneHeader from "@/components/features/phones/PhoneHeader.jsx";
 import QuickVerdict from "./QuickVerdict";
 import PriceByStore from "./PriceByStore";
+import PriceAlertForm from "./PriceAlertForm";
 import BuySkipBox from "./BuySkipBox";
 import ScoreStrip from "./ScoreStrip";
 import PriceComparison from "./PriceComparison";
@@ -23,6 +24,12 @@ export default function phoneDetailPage({ phone }) {
         {/* 3. Price by Store - Where to buy */}
         {phone.storePrices && phone.storePrices.length > 0 && (
           <PriceByStore storePrices={phone.storePrices} />
+        )}
+        {/* 3.5 Price Alert Form */}
+        {phone.id && (
+          <div id="price-alert" className="mb-6 md:mb-8 scroll-mt-24">
+            <PriceAlertForm phoneId={phone.id} phoneName={phone.name} />
+          </div>
         )}
         {/* 4. Buy/Skip Box - Personal fit */}
         {phone.buyReasons && phone.skipReasons && (

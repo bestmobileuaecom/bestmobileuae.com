@@ -24,7 +24,10 @@ export function getBestDeal(storePrices) {
   );
 }
 
-export default function PriceSection({ priceRange, bestDeal }) {
+export default function PriceSection({ priceRange, bestDeal, phoneSlug }) {
+  // Build compare URL with phone slug pre-selected
+  const compareUrl = phoneSlug ? `/compare?phones=${phoneSlug}` : "/compare";
+  
   return (
     <>
       {/* Price Box */}
@@ -57,14 +60,14 @@ export default function PriceSection({ priceRange, bestDeal }) {
             )}
           </div>
 
-          {/* Price Alert - Desktop */}
-          <button
-            type="button"
+          {/* Price Alert - Desktop - Scrolls to alert form */}
+          <Link
+            href="#price-alert"
             className="hidden md:inline-flex items-center gap-2 text-xs font-semibold text-background/90 bg-background/10 hover:bg-background/20 px-4 py-2.5 rounded-lg transition-colors border border-background/10"
           >
             <Bell className="w-4 h-4" />
             Set Price Alert
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -80,7 +83,7 @@ export default function PriceSection({ priceRange, bestDeal }) {
         </Link>
 
         <Link
-          href="/compare"
+          href={compareUrl}
           className="inline-flex items-center justify-center gap-1.5 md:gap-2 text-muted-foreground hover:text-foreground font-medium py-2.5 md:py-3 px-4 md:px-6 rounded-lg md:rounded-xl border border-border hover:border-primary/30 hover:bg-primary/5 active:scale-[0.98] transition-all text-sm md:text-base"
         >
           <Scale className="w-3.5 h-3.5 md:w-4 md:h-4" />
@@ -88,14 +91,14 @@ export default function PriceSection({ priceRange, bestDeal }) {
         </Link>
       </div>
 
-      {/* Mobile Price Alert */}
-      <button
-        type="button"
+      {/* Mobile Price Alert - Scrolls to alert form */}
+      <Link
+        href="#price-alert"
         className="md:hidden mt-2 w-full inline-flex items-center justify-center gap-1.5 text-xs font-medium text-muted-foreground bg-secondary hover:bg-secondary/80 active:scale-[0.98] px-3 py-2 rounded-lg transition-colors border border-border"
       >
         <Bell className="w-3.5 h-3.5" />
         Set Price Alert
-      </button>
+      </Link>
     </>
   );
 }

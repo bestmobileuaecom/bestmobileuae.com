@@ -3,25 +3,25 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import { Search, Smartphone, Star, X } from "lucide-react";
-import { allPhones } from "@/lib/phones-data";
 
 export default function PhoneSelector({
   isOpen,
   onClose,
   onSelect,
   excludeSlugs = [],
+  phones = [],
 }) {
   const [search, setSearch] = useState("");
 
   const filteredPhones = useMemo(() => {
-    return allPhones
+    return phones
       .filter((phone) => !excludeSlugs.includes(phone.slug))
       .filter(
         (phone) =>
           phone.name.toLowerCase().includes(search.toLowerCase()) ||
-          phone.brand.toLowerCase().includes(search.toLowerCase())
+          (phone.brand && phone.brand.toLowerCase().includes(search.toLowerCase()))
       );
-  }, [search, excludeSlugs]);
+  }, [phones, search, excludeSlugs]);
 
   if (!isOpen) return null;
 

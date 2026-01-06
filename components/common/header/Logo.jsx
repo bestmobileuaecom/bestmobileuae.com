@@ -5,11 +5,7 @@ export default function Logo() {
   return (
     <Link href="/" className="flex items-center gap-2.5 group">
       {/* Icon – unchanged */}
-      <div
-        className="w-8 h-8 rounded-lg bg-primary text-primary-foreground 
-                      flex items-center justify-center -rotate-3 
-                      group-hover:rotate-0 transition-transform duration-300"
-      >
+      <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center -rotate-3 group-hover:rotate-0 transition-transform duration-300">
         <Zap className="w-4.5 h-4.5 fill-current" />
       </div>
 

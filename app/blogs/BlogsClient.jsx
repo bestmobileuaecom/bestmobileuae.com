@@ -1,18 +1,47 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Newspaper } from "lucide-react";
-import { allArticles } from "@/lib/blogs-data";
 import ArticleCard from "@/components/features/blogs/ArticleCard";
 import CategoryFilter from "@/components/features/blogs/CategoryFilter";
 
 export default function BlogsClient() {
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("All");
+
+  useEffect(() => {
+    async function fetchArticles() {
+      try {
+        const res = await fetch("/api/articles");
+        const data = await res.json();
+        if (data.articles) {
+          setArticles(data.articles);
+        }
+      } catch (error) {
+        console.error("Error fetching articles:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchArticles();
+  }, []);
 
   const filteredArticles =
     activeCategory === "All"
-      ? allArticles
-      : allArticles.filter((article) => article.category === activeCategory);
+      ? articles
+      : articles.filter((article) => article.category === activeCategory);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-linear-to-b from-background via-background to-muted/20 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading articles...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-linear-to-b from-background via-background to-muted/20 pb-12">
@@ -56,7 +85,9 @@ export default function BlogsClient() {
           <div className="text-center py-12">
             <Newspaper className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
             <p className="text-muted-foreground">
-              No articles found in this category.
+              {articles.length === 0 
+                ? "No articles published yet." 
+                : "No articles found in this category."}
             </p>
           </div>
         )}

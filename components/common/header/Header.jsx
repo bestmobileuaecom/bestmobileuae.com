@@ -1,3 +1,6 @@
+"use client";
+
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -5,10 +8,11 @@ import {
   SheetContent,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Menu, Search, Heart, Bell } from "lucide-react";
+import { Menu, Search, Bell } from "lucide-react";
 import Logo from "./Logo";
 import NavMenu from "./Nav-Menu";
 import SearchBar from "./SearchBar";
+import FavoritesDropdown from "./FavoritesDropdown";
 
 export default function Header() {
   return (
@@ -91,23 +95,14 @@ export default function Header() {
               <span className="sr-only">Search</span>
             </Button>
 
-            {/* Wishlist Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hidden md:flex h-10 w-10 rounded-lg border border-border bg-muted hover:bg-border text-foreground relative transition-colors"
-            >
-              <Heart className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] font-bold text-white flex items-center justify-center shadow-sm">
-                3
-              </span>
-            </Button>
+            {/* Wishlist Button with Dropdown */}
+            <FavoritesDropdown />
 
-            <Button className="hidden sm:inline-flex rounded-lg px-4 h-10 bg-gradient-to-r from-primary to-primary hover:from-primary/90 hover:to-primary/90 text-sm font-semibold text-white shadow-lg shadow-primary/30 transition-all active:scale-95 uae-shine">
+            <Link href="/phones" className="hidden sm:inline-flex rounded-lg px-4 h-10 bg-gradient-to-r from-primary to-primary hover:from-primary/90 hover:to-primary/90 text-sm font-semibold text-white shadow-lg shadow-primary/30 transition-all active:scale-95 uae-shine items-center">
               <Bell className="mr-2 h-4 w-4" />
               <span className="hidden lg:inline">Price Alerts</span>
               <span className="lg:hidden">Alerts</span>
-            </Button>
+            </Link>
           </div>
         </div>
       </div>

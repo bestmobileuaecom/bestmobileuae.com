@@ -21,7 +21,7 @@ const tabs = [
 ];
 
 function PhoneRow({ phone, index, tabId }) {
-  const score = phone.score || (7 + Math.random() * 2).toFixed(1);
+  const score = phone.expert_score || phone.score || 0;
 
   const getBadge = () => {
     switch (tabId) {
@@ -111,10 +111,12 @@ function PhoneRow({ phone, index, tabId }) {
 export default function LatestPopularPhones({
   latestPhones = [],
   popularPhones = [],
+  topRatedPhones = [],
+  bestValuePhones = [],
 }) {
-  const [activeTab, setActiveTab] = useState("popular");
+  const [activeTab, setActiveTab] = useState("latest");
 
-  // Use different data based on tab (for demo, reusing same data with different sorting)
+  // Use different data based on tab
   const getPhones = () => {
     switch (activeTab) {
       case "latest":
@@ -122,13 +124,11 @@ export default function LatestPopularPhones({
       case "popular":
         return popularPhones;
       case "top-rated":
-        return [...popularPhones].sort(
-          (a, b) => (b.score || 8) - (a.score || 8)
-        );
+        return topRatedPhones;
       case "best-value":
-        return [...latestPhones].reverse();
+        return bestValuePhones;
       default:
-        return popularPhones;
+        return latestPhones;
     }
   };
 
