@@ -44,7 +44,7 @@ export default function ProductImageSection({ phone }) {
   };
 
   return (
-    <div className="relative w-full md:w-[320px] lg:w-[400px] flex-shrink-0 bg-gradient-to-br from-secondary via-muted/50 to-secondary">
+    <div className="relative w-full md:w-[320px] lg:w-[400px] flex-shrink-0 bg-gradient-to-br from-secondary via-muted/50 to-secondary flex flex-col">
       {/* Top Actions */}
       <div className="absolute top-3 md:top-4 left-3 md:left-4 right-3 md:right-4 flex items-center justify-between z-10">
         {phone.brand && (
@@ -82,9 +82,9 @@ export default function ProductImageSection({ phone }) {
         </div>
       </div>
 
-      {/* Phone Image */}
-      <div className="flex items-center justify-center p-4 pt-14 pb-6 md:p-8 md:pt-16 md:pb-10 min-h-[280px] md:min-h-[360px] lg:min-h-[400px]">
-        <div className="relative w-[160px] h-[200px] sm:w-[180px] sm:h-[240px] md:w-[220px] md:h-[300px] lg:w-[260px] lg:h-[350px] drop-shadow-2xl">
+      {/* Phone Image - flex-1 to fill available space and center vertically */}
+      <div className="flex-1 flex items-center justify-center p-4 pt-14 md:p-6 md:pt-16">
+        <div className="relative w-[180px] h-[234px] sm:w-[200px] sm:h-[260px] md:w-[220px] md:h-[286px] lg:w-[260px] lg:h-[338px] drop-shadow-2xl">
           <Image
             src={phone.image || "/placeholder-phone.png"}
             alt={phone.name}

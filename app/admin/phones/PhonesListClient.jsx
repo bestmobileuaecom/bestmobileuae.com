@@ -187,12 +187,12 @@ export default function PhonesListClient({ user, initialPhones, brands }) {
                   <tr key={phone.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                        <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden p-1">
                           {phone.image_url ? (
                             <img
                               src={phone.image_url}
                               alt={phone.name}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-contain"
                             />
                           ) : (
                             <FileText className="w-6 h-6 text-gray-400" />

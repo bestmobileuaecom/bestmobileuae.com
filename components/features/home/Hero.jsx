@@ -23,13 +23,13 @@ function PhonePickCard({ phone, badge, index }) {
       className="group flex items-center gap-4 p-3 bg-gradient-to-r from-background to-muted/20 rounded-xl border border-border/50 hover:border-primary/30 hover:shadow-md transition-all duration-200"
     >
       {/* Phone Image */}
-      <div className="relative w-14 h-14 bg-white rounded-xl flex-shrink-0 overflow-hidden border border-border/50 shadow-sm">
+      <div className="relative w-14 h-14 flex-shrink-0 overflow-hidden">
         {phone.image || phone.main_image ? (
           <Image
             src={phone.image || phone.main_image}
             alt={phone.name}
             fill
-            className="object-contain p-1 group-hover:scale-105 transition-transform"
+            className="object-contain group-hover:scale-105 transition-transform"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground">
