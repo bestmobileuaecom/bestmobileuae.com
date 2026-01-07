@@ -581,13 +581,28 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
                 <div className="space-y-1">
                   {formData.color_options.map((c, i) => (
                     <div key={i} className="flex gap-1 items-center">
-                      <input type="color" value={c.hex || "#000"} onChange={(e) => { const u = [...formData.color_options]; u[i] = { ...u[i], hex: e.target.value }; updateField("color_options", u); }} className="w-8 h-8 rounded border cursor-pointer" />
+                      <span
+                        className="w-6 h-6 rounded-full border border-gray-300"
+                        style={{ backgroundColor: c.hex || "#000" }}
+                        aria-hidden
+                      />
+                      <input 
+                        type="text" 
+                        value={c.hex || ""} 
+                        onChange={(e) => { 
+                          const u = [...formData.color_options]; 
+                          u[i] = { ...u[i], hex: e.target.value }; 
+                          updateField("color_options", u); 
+                        }} 
+                        className="w-32 px-2 py-1 border border-gray-300 rounded text-sm" 
+                        placeholder="#1E90FF" 
+                      />
                       <input type="text" value={c.name || ""} onChange={(e) => { const u = [...formData.color_options]; u[i] = { ...u[i], name: e.target.value }; updateField("color_options", u); }} className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm" placeholder="Awesome Navy" />
                       <button type="button" onClick={() => updateField("color_options", formData.color_options.filter((_, idx) => idx !== i))} className="p-1 text-red-500"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   ))}
                 </div>
-                <button type="button" onClick={() => updateField("color_options", [...formData.color_options, { name: "", hex: "#000" }])} className="mt-1 text-sm text-emerald-600 flex items-center gap-1"><Plus className="w-3 h-3" />Add</button>
+                <button type="button" onClick={() => updateField("color_options", [...formData.color_options, { name: "", hex: "" }])} className="mt-1 text-sm text-emerald-600 flex items-center gap-1"><Plus className="w-3 h-3" />Add</button>
               </div>
             </div>
           </div>

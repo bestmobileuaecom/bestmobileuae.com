@@ -10,7 +10,6 @@ import ScoreBadge from "./ScoreBadge";
 import PriceSection, { getBestDeal } from "./PriceSection";
 import {
   TrustSignals,
-  QuickSpecs,
   StorageOptions,
   ColorOptions,
 } from "./ProductSpecs";
@@ -74,8 +73,7 @@ export default function ProductHeader({ phone }) {
             {/* Trust Signals */}
             <TrustSignals signals={phone.trustSignals} />
 
-            {/* Quick Specs */}
-            <QuickSpecs specs={phone.specs} />
+            {/* Quick Specs removed as requested */}
 
             {/* Storage Options */}
             <StorageOptions options={phone.storageOptions} />
