@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AdminLayoutWrapper } from "@/components/admin";
-import { ImageUpload } from "@/components/admin/forms";
+import { ImageUpload, CommaSeparatedInput } from "@/components/admin/forms";
 import { createClient } from "@/lib/supabase/client";
 import {
   Save,
@@ -26,7 +26,13 @@ function generateSlug(name) {
 }
 
 // Section Card with number badge to show order
-function SectionCard({ number, title, subtitle, children, defaultOpen = true }) {
+function SectionCard({
+  number,
+  title,
+  subtitle,
+  children,
+  defaultOpen = true,
+}) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
@@ -45,17 +51,34 @@ function SectionCard({ number, title, subtitle, children, defaultOpen = true }) 
             {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
           </div>
         </div>
-        <span className={`text-gray-400 transform transition-transform ${isOpen ? "rotate-180" : ""}`}>
+        <span
+          className={`text-gray-400 transform transition-transform ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        >
           ▼
         </span>
       </button>
-      {isOpen && <div className="p-4 pt-0 border-t border-gray-100">{children}</div>}
+      {isOpen && (
+        <div className="p-4 pt-0 border-t border-gray-100">{children}</div>
+      )}
     </div>
   );
 }
 
 // Input components
-function InputField({ label, value, onChange, placeholder, type = "text", required, error, hint, className = "", disabled = false }) {
+function InputField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  required,
+  error,
+  hint,
+  className = "",
+  disabled = false,
+}) {
   return (
     <div className={className}>
       <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -66,7 +89,9 @@ function InputField({ label, value, onChange, placeholder, type = "text", requir
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm ${error ? "border-red-500" : "border-gray-300"} ${disabled ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""}`}
+        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm ${
+          error ? "border-red-500" : "border-gray-300"
+        } ${disabled ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""}`}
         placeholder={placeholder}
       />
       {hint && <p className="text-xs text-gray-500 mt-1">{hint}</p>}
@@ -75,10 +100,19 @@ function InputField({ label, value, onChange, placeholder, type = "text", requir
   );
 }
 
-function TextareaField({ label, value, onChange, placeholder, rows = 3, hint }) {
+function TextareaField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  rows = 3,
+  hint,
+}) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
+      <label className="block text-sm font-medium text-gray-700 mb-1.5">
+        {label}
+      </label>
       <textarea
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
@@ -97,11 +131,13 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
   const supabase = createClient();
   const saveTimeoutRef = useRef(null);
   const [phoneId, setPhoneId] = useState(phone?.id || null);
-  
+
   // Calculate original lowest store price for price drop detection
   const getLowestStorePrice = (prices) => {
-    const activePrices = prices?.filter(p => p.price_value > 0) || [];
-    return activePrices.length > 0 ? Math.min(...activePrices.map(p => p.price_value)) : null;
+    const activePrices = prices?.filter((p) => p.price_value > 0) || [];
+    return activePrices.length > 0
+      ? Math.min(...activePrices.map((p) => p.price_value))
+      : null;
   };
   const originalLowestPrice = useRef(getLowestStorePrice(phone?.storePrices));
 
@@ -122,12 +158,14 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
     overall_score_rating: phone?.overall_score_rating || "",
     overall_score_label: phone?.overall_score_label || "",
     why_pick: phone?.why_pick || "",
-    trust_signals: phone?.trust_signals?.length ? phone.trust_signals : [
-      { icon: "🔋", label: "" },
-      { icon: "🔄", label: "" },
-      { icon: "📱", label: "" },
-      { icon: "📶", label: "" },
-    ],
+    trust_signals: phone?.trust_signals?.length
+      ? phone.trust_signals
+      : [
+          { icon: "🔋", label: "" },
+          { icon: "🔄", label: "" },
+          { icon: "📱", label: "" },
+          { icon: "📶", label: "" },
+        ],
     storage_options: phone?.storage_options || [],
     color_options: phone?.color_options || [],
 
@@ -138,7 +176,9 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
 
     // Section 4: Buy/Skip
     buy_reasons: phone?.buy_reasons?.length ? phone.buy_reasons : ["", "", ""],
-    skip_reasons: phone?.skip_reasons?.length ? phone.skip_reasons : ["", "", ""],
+    skip_reasons: phone?.skip_reasons?.length
+      ? phone.skip_reasons
+      : ["", "", ""],
 
     // Section 5: Score Strip (auto-calculated from these)
     score_value: phone?.score_value || "",
@@ -178,12 +218,12 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
 
   // Store prices (separate state) - now uses store_id reference
   const [storePrices, setStorePrices] = useState(
-    phone?.storePrices?.length 
-      ? phone.storePrices.map(p => ({
+    phone?.storePrices?.length
+      ? phone.storePrices.map((p) => ({
           store_id: p.store_id || "",
           store_name: p.store_name || "",
           price_value: p.price_value || "",
-          url: p.url || ""
+          url: p.url || "",
         }))
       : [{ store_id: "", store_name: "", price_value: "", url: "" }]
   );
@@ -197,11 +237,13 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
   };
 
   // Helper to get store by id
-  const getStoreById = (storeId) => stores.find(s => s.id === storeId);
+  const getStoreById = (storeId) => stores.find((s) => s.id === storeId);
 
   // Specs as text for easy editing
   const [specsText, setSpecsText] = useState(
-    typeof phone?.specs === "object" ? JSON.stringify(phone?.specs, null, 2) : "{}"
+    typeof phone?.specs === "object"
+      ? JSON.stringify(phone?.specs, null, 2)
+      : "{}"
   );
 
   // UI State
@@ -210,13 +252,16 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
   const [errors, setErrors] = useState({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  const updateField = useCallback((field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setHasUnsavedChanges(true);
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: null }));
-    }
-  }, [errors]);
+  const updateField = useCallback(
+    (field, value) => {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+      setHasUnsavedChanges(true);
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: null }));
+      }
+    },
+    [errors]
+  );
 
   const handleNameChange = (name) => {
     updateField("name", name);
@@ -227,14 +272,18 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
 
   // Auto-update fallback price from lowest store price
   useEffect(() => {
-    const activePrices = storePrices.filter(sp => sp.price_value && Number(sp.price_value) > 0);
+    const activePrices = storePrices.filter(
+      (sp) => sp.price_value && Number(sp.price_value) > 0
+    );
     if (activePrices.length > 0) {
-      const lowestPrice = Math.min(...activePrices.map(sp => Number(sp.price_value)));
+      const lowestPrice = Math.min(
+        ...activePrices.map((sp) => Number(sp.price_value))
+      );
       if (lowestPrice !== Number(formData.price)) {
-        setFormData(prev => ({ 
-          ...prev, 
+        setFormData((prev) => ({
+          ...prev,
           price: lowestPrice,
-          price_range: `AED ${lowestPrice.toLocaleString()}`
+          price_range: `AED ${lowestPrice.toLocaleString()}`,
         }));
       }
     }
@@ -261,7 +310,8 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
     ].filter((n) => n !== null);
 
     if (categories.length === 0) {
-      if (formData.overall_score_rating !== "") updateField("overall_score_rating", "");
+      if (formData.overall_score_rating !== "")
+        updateField("overall_score_rating", "");
       return;
     }
 
@@ -282,18 +332,25 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
     if (!hasUnsavedChanges || !formData.name) return;
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(() => handleAutoSave(), 3000);
-    return () => { if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current); };
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
   }, [formData, storePrices, hasUnsavedChanges]);
 
   const prepareDataForSave = (status = null) => {
-    const cleanArray = (arr) => arr?.filter((item) => {
-      if (typeof item === "string") return item.trim();
-      if (typeof item === "object") return Object.values(item).some((v) => v);
-      return false;
-    }) || [];
+    const cleanArray = (arr) =>
+      arr?.filter((item) => {
+        if (typeof item === "string") return item.trim();
+        if (typeof item === "object") return Object.values(item).some((v) => v);
+        return false;
+      }) || [];
 
     let parsedSpecs = {};
-    try { parsedSpecs = JSON.parse(specsText); } catch { parsedSpecs = formData.specs; }
+    try {
+      parsedSpecs = JSON.parse(specsText);
+    } catch {
+      parsedSpecs = formData.specs;
+    }
 
     return {
       slug: formData.slug,
@@ -308,19 +365,51 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
       badge: formData.badge,
       badge_color: formData.badge_color,
       why_pick: formData.why_pick,
-      overall_score_rating: formData.overall_score_rating ? parseFloat(Number(formData.overall_score_rating).toFixed(1)) : null,
+      overall_score_rating: formData.overall_score_rating
+        ? parseFloat(Number(formData.overall_score_rating).toFixed(1))
+        : null,
       overall_score_label: formData.overall_score_label,
-      score_camera: formData.score_camera ? Math.round(Number(formData.score_camera)) : null,
-      score_battery: formData.score_battery ? Math.round(Number(formData.score_battery)) : null,
-      score_performance: formData.score_performance ? Math.round(Number(formData.score_performance)) : null,
-      score_display: formData.score_display ? Math.round(Number(formData.score_display)) : null,
-      score_value: formData.score_value ? Math.round(Number(formData.score_value)) : null,
+      score_camera: formData.score_camera
+        ? Math.round(Number(formData.score_camera))
+        : null,
+      score_battery: formData.score_battery
+        ? Math.round(Number(formData.score_battery))
+        : null,
+      score_performance: formData.score_performance
+        ? Math.round(Number(formData.score_performance))
+        : null,
+      score_display: formData.score_display
+        ? Math.round(Number(formData.score_display))
+        : null,
+      score_value: formData.score_value
+        ? Math.round(Number(formData.score_value))
+        : null,
       detailed_scores: [
-        { label: "Battery", rating: formData.score_battery ? Number(Number(formData.score_battery).toFixed(1)) : null },
-        { label: "Camera", rating: formData.score_camera ? Number(Number(formData.score_camera).toFixed(1)) : null },
-        { label: "Performance", rating: formData.score_performance ? Number(Number(formData.score_performance).toFixed(1)) : null },
-        { label: "Value", rating: formData.score_value ? Number(Number(formData.score_value).toFixed(1)) : null },
-      ].filter(s => s.rating !== null),
+        {
+          label: "Battery",
+          rating: formData.score_battery
+            ? Number(Number(formData.score_battery).toFixed(1))
+            : null,
+        },
+        {
+          label: "Camera",
+          rating: formData.score_camera
+            ? Number(Number(formData.score_camera).toFixed(1))
+            : null,
+        },
+        {
+          label: "Performance",
+          rating: formData.score_performance
+            ? Number(Number(formData.score_performance).toFixed(1))
+            : null,
+        },
+        {
+          label: "Value",
+          rating: formData.score_value
+            ? Number(Number(formData.score_value).toFixed(1))
+            : null,
+        },
+      ].filter((s) => s.rating !== null),
       verdict: formData.verdict,
       final_recommendation: formData.final_recommendation,
       buy_reasons: cleanArray(formData.buy_reasons),
@@ -337,7 +426,10 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
       specs: parsedSpecs,
       faqs: formData.faqs.filter((f) => f.question),
       status: status || formData.status,
-      published_at: status === "published" && !phone?.published_at ? new Date().toISOString() : phone?.published_at,
+      published_at:
+        status === "published" && !phone?.published_at
+          ? new Date().toISOString()
+          : phone?.published_at,
     };
   };
 
@@ -349,11 +441,18 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
     try {
       let savedId = phoneId;
       if (savedId) {
-        const { error } = await supabase.from("phones").update(phoneData).eq("id", savedId);
+        const { error } = await supabase
+          .from("phones")
+          .update(phoneData)
+          .eq("id", savedId);
         if (error) throw error;
       } else {
         phoneData.status = "draft";
-        const { data, error } = await supabase.from("phones").insert(phoneData).select("id").single();
+        const { data, error } = await supabase
+          .from("phones")
+          .insert(phoneData)
+          .select("id")
+          .single();
         if (error) throw error;
         savedId = data.id;
         setPhoneId(savedId);
@@ -361,19 +460,24 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
       }
 
       if (savedId) {
-        await supabase.from("phone_store_prices").delete().eq("phone_id", savedId);
-        const validPrices = storePrices.filter((p) => (p.store_id || p.store_name) && p.price_value);
+        await supabase
+          .from("phone_store_prices")
+          .delete()
+          .eq("phone_id", savedId);
+        const validPrices = storePrices.filter(
+          (p) => (p.store_id || p.store_name) && p.price_value
+        );
         if (validPrices.length > 0) {
           await supabase.from("phone_store_prices").insert(
             validPrices.map((p) => {
               const store = p.store_id ? getStoreById(p.store_id) : null;
-              return { 
-                phone_id: savedId, 
+              return {
+                phone_id: savedId,
                 store_id: p.store_id || null,
-                store_name: store?.name || p.store_name, 
+                store_name: store?.name || p.store_name,
                 price: formatPrice(p.price_value),
-                price_value: Number(p.price_value) || 0, 
-                url: p.url 
+                price_value: Number(p.price_value) || 0,
+                url: p.url,
               };
             })
           );
@@ -393,49 +497,72 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
     if (!formData.name) errs.name = "Required";
     if (!formData.slug) errs.slug = "Required";
     // Price is now optional - calculated from store prices
-    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      return;
+    }
 
     setSaving(true);
     const phoneData = prepareDataForSave(status);
-    
+
     // Calculate lowest store price for price alert comparison
-    const validPricesForCheck = storePrices.filter(p => (p.store_id || p.store_name) && p.price_value > 0);
-    const newLowestPrice = validPricesForCheck.length > 0 
-      ? Math.min(...validPricesForCheck.map(p => Number(p.price_value)))
-      : null;
+    const validPricesForCheck = storePrices.filter(
+      (p) => (p.store_id || p.store_name) && p.price_value > 0
+    );
+    const newLowestPrice =
+      validPricesForCheck.length > 0
+        ? Math.min(...validPricesForCheck.map((p) => Number(p.price_value)))
+        : null;
     const oldLowestPrice = originalLowestPrice.current;
 
     try {
       let savedId = phoneId;
       if (savedId) {
-        const { error } = await supabase.from("phones").update(phoneData).eq("id", savedId);
+        const { error } = await supabase
+          .from("phones")
+          .update(phoneData)
+          .eq("id", savedId);
         if (error) throw error;
       } else {
-        const { data, error } = await supabase.from("phones").insert(phoneData).select("id").single();
+        const { data, error } = await supabase
+          .from("phones")
+          .insert(phoneData)
+          .select("id")
+          .single();
         if (error) throw error;
         savedId = data.id;
       }
 
-      await supabase.from("phone_store_prices").delete().eq("phone_id", savedId);
-      const validPrices = storePrices.filter((p) => (p.store_id || p.store_name) && p.price_value);
+      await supabase
+        .from("phone_store_prices")
+        .delete()
+        .eq("phone_id", savedId);
+      const validPrices = storePrices.filter(
+        (p) => (p.store_id || p.store_name) && p.price_value
+      );
       if (validPrices.length > 0) {
         await supabase.from("phone_store_prices").insert(
           validPrices.map((p) => {
             const store = p.store_id ? getStoreById(p.store_id) : null;
-            return { 
-              phone_id: savedId, 
+            return {
+              phone_id: savedId,
               store_id: p.store_id || null,
-              store_name: store?.name || p.store_name, 
+              store_name: store?.name || p.store_name,
               price: formatPrice(p.price_value),
-              price_value: Number(p.price_value) || 0, 
-              url: p.url 
+              price_value: Number(p.price_value) || 0,
+              url: p.url,
             };
           })
         );
       }
 
       // Check for price drop and send notifications (based on lowest store price)
-      if (oldLowestPrice && newLowestPrice && newLowestPrice < oldLowestPrice && status === "published") {
+      if (
+        oldLowestPrice &&
+        newLowestPrice &&
+        newLowestPrice < oldLowestPrice &&
+        status === "published"
+      ) {
         try {
           const notifyResponse = await fetch("/api/price-alert/notify", {
             method: "POST",
@@ -451,10 +578,15 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
           });
           const notifyResult = await notifyResponse.json();
           if (notifyResult.notified > 0) {
-            console.log(`Price drop notifications sent to ${notifyResult.notified} subscribers (${oldLowestPrice} → ${newLowestPrice})`);
+            console.log(
+              `Price drop notifications sent to ${notifyResult.notified} subscribers (${oldLowestPrice} → ${newLowestPrice})`
+            );
           }
         } catch (notifyError) {
-          console.error("Failed to send price drop notifications:", notifyError);
+          console.error(
+            "Failed to send price drop notifications:",
+            notifyError
+          );
           // Don't block the save operation if notifications fail
         }
         // Update the reference so subsequent saves don't re-trigger
@@ -472,35 +604,65 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
   };
 
   return (
-    <AdminLayoutWrapper user={user} title={isEdit ? `Edit: ${phone.name}` : "Add New Phone"}>
+    <AdminLayoutWrapper
+      user={user}
+      title={isEdit ? `Edit: ${phone.name}` : "Add New Phone"}
+    >
       {/* Header */}
       <div className="sticky top-0 z-10 bg-gray-100 -mx-6 px-6 py-4 mb-6 border-b border-gray-200">
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/admin/phones" className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
+            <Link
+              href="/admin/phones"
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+            >
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div className="flex items-center gap-2 text-sm">
               {saving ? (
-                <span className="flex items-center gap-1 text-gray-500"><Loader2 className="w-4 h-4 animate-spin" />Saving...</span>
+                <span className="flex items-center gap-1 text-gray-500">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving...
+                </span>
               ) : hasUnsavedChanges ? (
-                <span className="flex items-center gap-1 text-amber-600"><AlertCircle className="w-4 h-4" />Unsaved</span>
+                <span className="flex items-center gap-1 text-amber-600">
+                  <AlertCircle className="w-4 h-4" />
+                  Unsaved
+                </span>
               ) : lastSaved ? (
-                <span className="flex items-center gap-1 text-emerald-600"><Check className="w-4 h-4" />Saved</span>
+                <span className="flex items-center gap-1 text-emerald-600">
+                  <Check className="w-4 h-4" />
+                  Saved
+                </span>
               ) : null}
             </div>
           </div>
           <div className="flex gap-2">
             {formData.slug && (
-              <Link href={`/phones/${formData.slug}?preview=true`} target="_blank" className="flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
-                <ExternalLink className="w-4 h-4" />Preview
+              <Link
+                href={`/phones/${formData.slug}?preview=true`}
+                target="_blank"
+                className="flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Preview
               </Link>
             )}
-            <button onClick={() => handleSave("draft")} disabled={saving} className="flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">
-              <Save className="w-4 h-4" />Draft
+            <button
+              onClick={() => handleSave("draft")}
+              disabled={saving}
+              className="flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            >
+              <Save className="w-4 h-4" />
+              Draft
             </button>
-            <button onClick={() => handleSave("published")} disabled={saving} className="flex items-center gap-2 px-3 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg disabled:opacity-50">
-              <Check className="w-4 h-4" />Publish
+            <button
+              onClick={() => handleSave("published")}
+              disabled={saving}
+              className="flex items-center gap-2 px-3 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg disabled:opacity-50"
+            >
+              <Check className="w-4 h-4" />
+              Publish
             </button>
           </div>
         </div>
@@ -508,32 +670,69 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
 
       {/* Form sections in SAME ORDER as phone detail page */}
       <div className="space-y-4">
-
         {/* 0. Basic Info (Required) */}
         <SectionCard number="0" title="Basic Info" subtitle="Required fields">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-            <InputField label="Phone Name" value={formData.name} onChange={handleNameChange} placeholder="Samsung Galaxy A35 5G" required error={errors.name} />
-            <InputField label="URL Slug" value={formData.slug} onChange={(v) => updateField("slug", v)} placeholder="samsung-galaxy-a35-5g" required error={errors.slug} />
-            <InputField label="Display Price (AED)" value={formData.price} onChange={handlePriceChange} placeholder="Auto from store prices" type="number" disabled={true} hint="Auto-calculated from lowest store price" />
+            <InputField
+              label="Phone Name"
+              value={formData.name}
+              onChange={handleNameChange}
+              placeholder="Samsung Galaxy A35 5G"
+              required
+              error={errors.name}
+            />
+            <InputField
+              label="URL Slug"
+              value={formData.slug}
+              onChange={(v) => updateField("slug", v)}
+              placeholder="samsung-galaxy-a35-5g"
+              required
+              error={errors.slug}
+            />
+            <InputField
+              label="Display Price (AED)"
+              value={formData.price}
+              onChange={handlePriceChange}
+              placeholder="Auto from store prices"
+              type="number"
+              disabled={true}
+              hint="Auto-calculated from lowest store price"
+            />
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Brand</label>
-              <select value={formData.brand_id || ""} onChange={(e) => updateField("brand_id", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Brand
+              </label>
+              <select
+                value={formData.brand_id || ""}
+                onChange={(e) => updateField("brand_id", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
                 <option value="">Select</option>
-                {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                {brands.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
-              <select value={formData.category} onChange={(e) => updateField("category", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Category
+              </label>
+              <select
+                value={formData.category}
+                onChange={(e) => updateField("category", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
                 <option value="budget">Budget</option>
                 <option value="mid-range">Mid-Range</option>
                 <option value="flagship">Flagship</option>
                 <option value="premium">Premium</option>
               </select>
             </div>
-            <ImageUpload 
-              label="Phone Image" 
-              value={formData.image_url} 
+            <ImageUpload
+              label="Phone Image"
+              value={formData.image_url}
               onChange={(v) => updateField("image_url", v)}
               bucket="phone-images"
             />
@@ -541,15 +740,41 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
         </SectionCard>
 
         {/* 1. Header Section */}
-        <SectionCard number="1" title="Header Section" subtitle="Phone identity, score, trust signals, options">
+        <SectionCard
+          number="1"
+          title="Header Section"
+          subtitle="Phone identity, score, trust signals, options"
+        >
           <div className="space-y-4 pt-4">
-            <TextareaField label="Identity (Description below phone name)" value={formData.identity} onChange={(v) => updateField("identity", v)} placeholder="The Samsung Galaxy A35 5G is a popular mid-range smartphone..." rows={2} />
-            
+            <TextareaField
+              label="Identity (Description below phone name)"
+              value={formData.identity}
+              onChange={(v) => updateField("identity", v)}
+              placeholder="The Samsung Galaxy A35 5G is a popular mid-range smartphone..."
+              rows={2}
+            />
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <InputField label="Overall Score (0-10)" value={formData.overall_score_rating} onChange={(v) => updateField("overall_score_rating", v)} placeholder="Auto from Verdict Score" type="number" hint="Auto-calculated average of category scores" disabled={true} />
+              <InputField
+                label="Overall Score (0-10)"
+                value={formData.overall_score_rating}
+                onChange={(v) => updateField("overall_score_rating", v)}
+                placeholder="Auto from Verdict Score"
+                type="number"
+                hint="Auto-calculated average of category scores"
+                disabled={true}
+              />
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Score Label</label>
-                <select value={formData.overall_score_label || ""} onChange={(e) => updateField("overall_score_label", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Score Label
+                </label>
+                <select
+                  value={formData.overall_score_label || ""}
+                  onChange={(e) =>
+                    updateField("overall_score_label", e.target.value)
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                >
                   <option value="">Select</option>
                   <option value="Excellent">Excellent</option>
                   <option value="Very Good">Very Good</option>
@@ -557,17 +782,44 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
                   <option value="Average">Average</option>
                 </select>
               </div>
-              <InputField label="Why Pick (Score summary)" value={formData.why_pick} onChange={(v) => updateField("why_pick", v)} placeholder="Perfect everyday phone at this price" />
+              <InputField
+                label="Why Pick (Score summary)"
+                value={formData.why_pick}
+                onChange={(v) => updateField("why_pick", v)}
+                placeholder="Perfect everyday phone at this price"
+              />
             </div>
 
             {/* Trust Signals */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Trust Signals (4 badges below price)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Trust Signals (4 badges below price)
+              </label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {formData.trust_signals.map((s, i) => (
                   <div key={i} className="flex gap-1">
-                    <input type="text" value={s.icon} onChange={(e) => { const u = [...formData.trust_signals]; u[i] = { ...u[i], icon: e.target.value }; updateField("trust_signals", u); }} className="w-12 px-2 py-2 border border-gray-300 rounded-lg text-center text-sm" placeholder="🔋" />
-                    <input type="text" value={s.label} onChange={(e) => { const u = [...formData.trust_signals]; u[i] = { ...u[i], label: e.target.value }; updateField("trust_signals", u); }} className="flex-1 px-2 py-2 border border-gray-300 rounded-lg text-sm" placeholder="All-day battery" />
+                    <input
+                      type="text"
+                      value={s.icon}
+                      onChange={(e) => {
+                        const u = [...formData.trust_signals];
+                        u[i] = { ...u[i], icon: e.target.value };
+                        updateField("trust_signals", u);
+                      }}
+                      className="w-12 px-2 py-2 border border-gray-300 rounded-lg text-center text-sm"
+                      placeholder="🔋"
+                    />
+                    <input
+                      type="text"
+                      value={s.label}
+                      onChange={(e) => {
+                        const u = [...formData.trust_signals];
+                        u[i] = { ...u[i], label: e.target.value };
+                        updateField("trust_signals", u);
+                      }}
+                      className="flex-1 px-2 py-2 border border-gray-300 rounded-lg text-sm"
+                      placeholder="All-day battery"
+                    />
                   </div>
                 ))}
               </div>
@@ -575,9 +827,17 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
 
             {/* Storage & Colors */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <InputField label="Storage Options" value={formData.storage_options?.join(", ")} onChange={(v) => updateField("storage_options", v.split(",").map(s => s.trim()).filter(Boolean))} placeholder="128GB, 256GB" hint="Comma separated" />
+              <CommaSeparatedInput
+                label="Storage Options"
+                value={formData.storage_options || []}
+                onChange={(arr) => updateField("storage_options", arr)}
+                placeholder="128GB, 256GB, 128GB | 6GB"
+                hint="Comma separated"
+              />
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Color Options</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Color Options
+                </label>
                 <div className="space-y-1">
                   {formData.color_options.map((c, i) => (
                     <div key={i} className="flex gap-1 items-center">
@@ -586,37 +846,85 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
                         style={{ backgroundColor: c.hex || "#000" }}
                         aria-hidden
                       />
-                      <input 
-                        type="text" 
-                        value={c.hex || ""} 
-                        onChange={(e) => { 
-                          const u = [...formData.color_options]; 
-                          u[i] = { ...u[i], hex: e.target.value }; 
-                          updateField("color_options", u); 
-                        }} 
-                        className="w-32 px-2 py-1 border border-gray-300 rounded text-sm" 
-                        placeholder="#1E90FF" 
+                      <input
+                        type="text"
+                        value={c.hex || ""}
+                        onChange={(e) => {
+                          const u = [...formData.color_options];
+                          u[i] = { ...u[i], hex: e.target.value };
+                          updateField("color_options", u);
+                        }}
+                        className="w-32 px-2 py-1 border border-gray-300 rounded text-sm"
+                        placeholder="#1E90FF"
                       />
-                      <input type="text" value={c.name || ""} onChange={(e) => { const u = [...formData.color_options]; u[i] = { ...u[i], name: e.target.value }; updateField("color_options", u); }} className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm" placeholder="Awesome Navy" />
-                      <button type="button" onClick={() => updateField("color_options", formData.color_options.filter((_, idx) => idx !== i))} className="p-1 text-red-500"><Trash2 className="w-4 h-4" /></button>
+                      <input
+                        type="text"
+                        value={c.name || ""}
+                        onChange={(e) => {
+                          const u = [...formData.color_options];
+                          u[i] = { ...u[i], name: e.target.value };
+                          updateField("color_options", u);
+                        }}
+                        className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
+                        placeholder="Awesome Navy"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateField(
+                            "color_options",
+                            formData.color_options.filter((_, idx) => idx !== i)
+                          )
+                        }
+                        className="p-1 text-red-500"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   ))}
                 </div>
-                <button type="button" onClick={() => updateField("color_options", [...formData.color_options, { name: "", hex: "" }])} className="mt-1 text-sm text-emerald-600 flex items-center gap-1"><Plus className="w-3 h-3" />Add</button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField("color_options", [
+                      ...formData.color_options,
+                      { name: "", hex: "" },
+                    ])
+                  }
+                  className="mt-1 text-sm text-emerald-600 flex items-center gap-1"
+                >
+                  <Plus className="w-3 h-3" />
+                  Add
+                </button>
               </div>
             </div>
           </div>
         </SectionCard>
 
         {/* 2. Quick Verdict */}
-        <SectionCard number="2" title="Quick Verdict" subtitle="Should You Buy This Phone?">
+        <SectionCard
+          number="2"
+          title="Quick Verdict"
+          subtitle="Should You Buy This Phone?"
+        >
           <div className="pt-4">
-            <TextareaField label="Verdict" value={formData.verdict} onChange={(v) => updateField("verdict", v)} placeholder="Yes, if you want... No, if camera quality matters..." rows={2} hint="Start with 'Yes, if...' and 'No, if...'" />
+            <TextareaField
+              label="Verdict"
+              value={formData.verdict}
+              onChange={(v) => updateField("verdict", v)}
+              placeholder="Yes, if you want... No, if camera quality matters..."
+              rows={2}
+              hint="Start with 'Yes, if...' and 'No, if...'"
+            />
           </div>
         </SectionCard>
 
         {/* 3. Store Prices */}
-        <SectionCard number="3" title="Store Prices" subtitle="Where to Buy in UAE">
+        <SectionCard
+          number="3"
+          title="Store Prices"
+          subtitle="Where to Buy in UAE"
+        >
           <div className="pt-4 space-y-3">
             {/* Header row */}
             <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-500 px-2">
@@ -627,72 +935,88 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
               <div className="col-span-1"></div>
             </div>
             {storePrices.map((sp, i) => {
-              const selectedStore = sp.store_id ? getStoreById(sp.store_id) : null;
+              const selectedStore = sp.store_id
+                ? getStoreById(sp.store_id)
+                : null;
               return (
-                <div key={i} className="grid grid-cols-12 gap-2 items-center bg-gray-50 p-3 rounded-lg">
+                <div
+                  key={i}
+                  className="grid grid-cols-12 gap-2 items-center bg-gray-50 p-3 rounded-lg"
+                >
                   {/* Store Dropdown with Logo */}
                   <div className="col-span-3">
                     <div className="flex items-center gap-2">
                       {selectedStore?.logo_url && (
-                        <img src={selectedStore.logo_url} alt={selectedStore.name} className="w-6 h-6 object-contain" />
+                        <img
+                          src={selectedStore.logo_url}
+                          alt={selectedStore.name}
+                          className="w-6 h-6 object-contain"
+                        />
                       )}
-                      <select 
-                        value={sp.store_id || ""} 
-                        onChange={(e) => { 
-                          const u = [...storePrices]; 
-                          const store = stores.find(s => s.id === e.target.value);
-                          u[i] = { 
-                            ...u[i], 
+                      <select
+                        value={sp.store_id || ""}
+                        onChange={(e) => {
+                          const u = [...storePrices];
+                          const store = stores.find(
+                            (s) => s.id === e.target.value
+                          );
+                          u[i] = {
+                            ...u[i],
                             store_id: e.target.value,
                             store_name: store?.name || "",
-                            url: store?.website_url || u[i].url
-                          }; 
-                          setStorePrices(u); 
-                          setHasUnsavedChanges(true); 
-                        }} 
+                            url: store?.website_url || u[i].url,
+                          };
+                          setStorePrices(u);
+                          setHasUnsavedChanges(true);
+                        }}
                         className="flex-1 px-2 py-2 border border-gray-300 rounded text-sm bg-white"
                       >
                         <option value="">Select store...</option>
                         {stores.map((s) => (
-                          <option key={s.id} value={s.id}>{s.name}</option>
+                          <option key={s.id} value={s.id}>
+                            {s.name}
+                          </option>
                         ))}
                       </select>
                     </div>
                   </div>
                   {/* Price Value - Single input */}
-                  <input 
-                    type="number" 
-                    value={sp.price_value} 
-                    onChange={(e) => { 
-                      const u = [...storePrices]; 
-                      u[i] = { ...u[i], price_value: e.target.value }; 
-                      setStorePrices(u); 
-                      setHasUnsavedChanges(true); 
-                    }} 
-                    className="col-span-2 px-2 py-2 border border-gray-300 rounded text-sm" 
-                    placeholder="2159" 
+                  <input
+                    type="number"
+                    value={sp.price_value}
+                    onChange={(e) => {
+                      const u = [...storePrices];
+                      u[i] = { ...u[i], price_value: e.target.value };
+                      setStorePrices(u);
+                      setHasUnsavedChanges(true);
+                    }}
+                    className="col-span-2 px-2 py-2 border border-gray-300 rounded text-sm"
+                    placeholder="2159"
                   />
                   {/* Auto-formatted price display */}
                   <div className="col-span-2 px-2 py-2 text-sm text-gray-600 bg-gray-100 rounded">
                     {formatPrice(sp.price_value) || "AED 0"}
                   </div>
                   {/* URL */}
-                  <input 
-                    type="text" 
-                    value={sp.url || ""} 
-                    onChange={(e) => { 
-                      const u = [...storePrices]; 
-                      u[i] = { ...u[i], url: e.target.value }; 
-                      setStorePrices(u); 
-                      setHasUnsavedChanges(true); 
-                    }} 
-                    className="col-span-4 px-2 py-2 border border-gray-300 rounded text-sm" 
-                    placeholder="https://www.noon.com/product/..." 
+                  <input
+                    type="text"
+                    value={sp.url || ""}
+                    onChange={(e) => {
+                      const u = [...storePrices];
+                      u[i] = { ...u[i], url: e.target.value };
+                      setStorePrices(u);
+                      setHasUnsavedChanges(true);
+                    }}
+                    className="col-span-4 px-2 py-2 border border-gray-300 rounded text-sm"
+                    placeholder="https://www.noon.com/product/..."
                   />
                   {/* Delete */}
-                  <button 
-                    type="button" 
-                    onClick={() => { setStorePrices(storePrices.filter((_, idx) => idx !== i)); setHasUnsavedChanges(true); }} 
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStorePrices(storePrices.filter((_, idx) => idx !== i));
+                      setHasUnsavedChanges(true);
+                    }}
                     className="col-span-1 p-2 text-red-500 hover:bg-red-50 rounded"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -700,15 +1024,19 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
                 </div>
               );
             })}
-            <button 
-              type="button" 
-              onClick={() => { 
-                setStorePrices([...storePrices, { store_id: "", store_name: "", price_value: "", url: "" }]); 
-                setHasUnsavedChanges(true); 
-              }} 
+            <button
+              type="button"
+              onClick={() => {
+                setStorePrices([
+                  ...storePrices,
+                  { store_id: "", store_name: "", price_value: "", url: "" },
+                ]);
+                setHasUnsavedChanges(true);
+              }}
               className="text-sm text-emerald-600 flex items-center gap-1 hover:text-emerald-700"
             >
-              <Plus className="w-4 h-4" />Add Store
+              <Plus className="w-4 h-4" />
+              Add Store
             </button>
             {stores.length === 0 && (
               <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
@@ -719,44 +1047,127 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
         </SectionCard>
 
         {/* 4. Buy/Skip */}
-        <SectionCard number="4" title="Buy or Skip" subtitle="Is This Phone Right for You?">
+        <SectionCard
+          number="4"
+          title="Buy or Skip"
+          subtitle="Is This Phone Right for You?"
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
             <div>
-              <label className="block text-sm font-medium text-green-700 mb-2">✓ Good for you if</label>
+              <label className="block text-sm font-medium text-green-700 mb-2">
+                ✓ Good for you if
+              </label>
               {formData.buy_reasons.map((r, i) => (
                 <div key={i} className="flex gap-1 mb-1">
-                  <input type="text" value={r} onChange={(e) => { const u = [...formData.buy_reasons]; u[i] = e.target.value; updateField("buy_reasons", u); }} className="flex-1 px-2 py-2 border border-gray-300 rounded text-sm" placeholder="All-day battery that lasts 1.5 days..." />
-                  <button type="button" onClick={() => updateField("buy_reasons", formData.buy_reasons.filter((_, idx) => idx !== i))} className="p-1 text-red-500"><Trash2 className="w-4 h-4" /></button>
+                  <input
+                    type="text"
+                    value={r}
+                    onChange={(e) => {
+                      const u = [...formData.buy_reasons];
+                      u[i] = e.target.value;
+                      updateField("buy_reasons", u);
+                    }}
+                    className="flex-1 px-2 py-2 border border-gray-300 rounded text-sm"
+                    placeholder="All-day battery that lasts 1.5 days..."
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField(
+                        "buy_reasons",
+                        formData.buy_reasons.filter((_, idx) => idx !== i)
+                      )
+                    }
+                    className="p-1 text-red-500"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               ))}
-              <button type="button" onClick={() => updateField("buy_reasons", [...formData.buy_reasons, ""])} className="text-sm text-emerald-600 flex items-center gap-1"><Plus className="w-3 h-3" />Add</button>
+              <button
+                type="button"
+                onClick={() =>
+                  updateField("buy_reasons", [...formData.buy_reasons, ""])
+                }
+                className="text-sm text-emerald-600 flex items-center gap-1"
+              >
+                <Plus className="w-3 h-3" />
+                Add
+              </button>
             </div>
             <div>
-              <label className="block text-sm font-medium text-red-700 mb-2">✗ Avoid if</label>
+              <label className="block text-sm font-medium text-red-700 mb-2">
+                ✗ Avoid if
+              </label>
               {formData.skip_reasons.map((r, i) => (
                 <div key={i} className="flex gap-1 mb-1">
-                  <input type="text" value={r} onChange={(e) => { const u = [...formData.skip_reasons]; u[i] = e.target.value; updateField("skip_reasons", u); }} className="flex-1 px-2 py-2 border border-gray-300 rounded text-sm" placeholder="Heavy games like Genshin will struggle..." />
-                  <button type="button" onClick={() => updateField("skip_reasons", formData.skip_reasons.filter((_, idx) => idx !== i))} className="p-1 text-red-500"><Trash2 className="w-4 h-4" /></button>
+                  <input
+                    type="text"
+                    value={r}
+                    onChange={(e) => {
+                      const u = [...formData.skip_reasons];
+                      u[i] = e.target.value;
+                      updateField("skip_reasons", u);
+                    }}
+                    className="flex-1 px-2 py-2 border border-gray-300 rounded text-sm"
+                    placeholder="Heavy games like Genshin will struggle..."
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField(
+                        "skip_reasons",
+                        formData.skip_reasons.filter((_, idx) => idx !== i)
+                      )
+                    }
+                    className="p-1 text-red-500"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               ))}
-              <button type="button" onClick={() => updateField("skip_reasons", [...formData.skip_reasons, ""])} className="text-sm text-emerald-600 flex items-center gap-1"><Plus className="w-3 h-3" />Add</button>
+              <button
+                type="button"
+                onClick={() =>
+                  updateField("skip_reasons", [...formData.skip_reasons, ""])
+                }
+                className="text-sm text-emerald-600 flex items-center gap-1"
+              >
+                <Plus className="w-3 h-3" />
+                Add
+              </button>
             </div>
           </div>
         </SectionCard>
 
         {/* 5. Verdict Score */}
-        <SectionCard number="5" title="Verdict Score" subtitle="Enter 0-10; Overall auto-calculates">
+        <SectionCard
+          number="5"
+          title="Verdict Score"
+          subtitle="Enter 0-10; Overall auto-calculates"
+        >
           <div className="pt-4">
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
               {[
                 { key: "score_value", label: "Value\nPrice vs features" },
-                { key: "score_performance", label: "Daily Use\nApps, calls, browsing" },
+                {
+                  key: "score_performance",
+                  label: "Daily Use\nApps, calls, browsing",
+                },
                 { key: "score_camera", label: "Camera\nDay & night quality" },
-                { key: "score_performance", label: "Gaming\nHeavy games performance" },
-                { key: "score_battery", label: "Battery\nScreen-on time, charging" },
+                {
+                  key: "score_performance",
+                  label: "Gaming\nHeavy games performance",
+                },
+                {
+                  key: "score_battery",
+                  label: "Battery\nScreen-on time, charging",
+                },
               ].map((s, i) => (
                 <div key={i}>
-                  <label className="block text-xs text-gray-600 mb-1 whitespace-pre-line">{s.label}</label>
+                  <label className="block text-xs text-gray-600 mb-1 whitespace-pre-line">
+                    {s.label}
+                  </label>
                   <input
                     type="number"
                     min="0"
@@ -769,72 +1180,263 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
                 </div>
               ))}
             </div>
-            <p className="text-xs text-gray-500 mt-2">Average(Value, Daily Use, Camera, Battery) → Overall</p>
+            <p className="text-xs text-gray-500 mt-2">
+              Average(Value, Daily Use, Camera, Battery) → Overall
+            </p>
           </div>
         </SectionCard>
 
         {/* 6. Key Differences */}
-        <SectionCard number="6" title="Real-World Experience" subtitle="Key Differences (4 cards)">
+        <SectionCard
+          number="6"
+          title="Real-World Experience"
+          subtitle="Key Differences (4 cards)"
+        >
           <div className="pt-4 space-y-3">
             {formData.key_differences.map((d, i) => (
               <div key={i} className="bg-gray-50 p-3 rounded-lg">
                 <div className="flex gap-2 mb-2">
-                  <input type="text" value={d.icon || ""} onChange={(e) => { const u = [...formData.key_differences]; u[i] = { ...u[i], icon: e.target.value }; updateField("key_differences", u); }} className="w-10 px-2 py-1 border rounded text-center text-sm" placeholder="⚡" />
-                  <input type="text" value={d.title || ""} onChange={(e) => { const u = [...formData.key_differences]; u[i] = { ...u[i], title: e.target.value }; updateField("key_differences", u); }} className="flex-1 px-2 py-1 border rounded text-sm" placeholder="Performance" />
-                  <button type="button" onClick={() => updateField("key_differences", formData.key_differences.filter((_, idx) => idx !== i))} className="p-1 text-red-500"><Trash2 className="w-4 h-4" /></button>
+                  <input
+                    type="text"
+                    value={d.icon || ""}
+                    onChange={(e) => {
+                      const u = [...formData.key_differences];
+                      u[i] = { ...u[i], icon: e.target.value };
+                      updateField("key_differences", u);
+                    }}
+                    className="w-10 px-2 py-1 border rounded text-center text-sm"
+                    placeholder="⚡"
+                  />
+                  <input
+                    type="text"
+                    value={d.title || ""}
+                    onChange={(e) => {
+                      const u = [...formData.key_differences];
+                      u[i] = { ...u[i], title: e.target.value };
+                      updateField("key_differences", u);
+                    }}
+                    className="flex-1 px-2 py-1 border rounded text-sm"
+                    placeholder="Performance"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField(
+                        "key_differences",
+                        formData.key_differences.filter((_, idx) => idx !== i)
+                      )
+                    }
+                    className="p-1 text-red-500"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
                 {(d.points || ["", "", ""]).map((p, pi) => (
-                  <input key={pi} type="text" value={p} onChange={(e) => { const u = [...formData.key_differences]; const pts = [...(u[i].points || ["", "", ""])]; pts[pi] = e.target.value; u[i] = { ...u[i], points: pts }; updateField("key_differences", u); }} className="w-full px-2 py-1 border rounded text-sm mb-1" placeholder={`Point ${pi + 1}`} />
+                  <input
+                    key={pi}
+                    type="text"
+                    value={p}
+                    onChange={(e) => {
+                      const u = [...formData.key_differences];
+                      const pts = [...(u[i].points || ["", "", ""])];
+                      pts[pi] = e.target.value;
+                      u[i] = { ...u[i], points: pts };
+                      updateField("key_differences", u);
+                    }}
+                    className="w-full px-2 py-1 border rounded text-sm mb-1"
+                    placeholder={`Point ${pi + 1}`}
+                  />
                 ))}
               </div>
             ))}
-            <button type="button" onClick={() => updateField("key_differences", [...formData.key_differences, { icon: "", title: "", points: ["", "", ""] }])} className="text-sm text-emerald-600 flex items-center gap-1"><Plus className="w-4 h-4" />Add Card</button>
+            <button
+              type="button"
+              onClick={() =>
+                updateField("key_differences", [
+                  ...formData.key_differences,
+                  { icon: "", title: "", points: ["", "", ""] },
+                ])
+              }
+              className="text-sm text-emerald-600 flex items-center gap-1"
+            >
+              <Plus className="w-4 h-4" />
+              Add Card
+            </button>
           </div>
         </SectionCard>
 
         {/* 7. Price Comparison */}
-        <SectionCard number="7" title="How This Phone Compares" subtitle="Price comparison points">
+        <SectionCard
+          number="7"
+          title="How This Phone Compares"
+          subtitle="Price comparison points"
+        >
           <div className="pt-4 space-y-2">
             {formData.price_comparison.map((c, i) => (
               <div key={i} className="flex gap-2 items-center">
-                <select value={c.type || "better"} onChange={(e) => { const u = [...formData.price_comparison]; u[i] = { ...u[i], type: e.target.value }; updateField("price_comparison", u); }} className="w-24 px-2 py-2 border rounded text-sm">
+                <select
+                  value={c.type || "better"}
+                  onChange={(e) => {
+                    const u = [...formData.price_comparison];
+                    u[i] = { ...u[i], type: e.target.value };
+                    updateField("price_comparison", u);
+                  }}
+                  className="w-24 px-2 py-2 border rounded text-sm"
+                >
                   <option value="better">✓ Better</option>
                   <option value="average">○ Average</option>
                   <option value="worse">✗ Worse</option>
                 </select>
-                <input type="text" value={c.label || ""} onChange={(e) => { const u = [...formData.price_comparison]; u[i] = { ...u[i], label: e.target.value }; updateField("price_comparison", u); }} className="w-36 px-2 py-2 border rounded text-sm" placeholder="Better battery life" />
-                <input type="text" value={c.text || ""} onChange={(e) => { const u = [...formData.price_comparison]; u[i] = { ...u[i], text: e.target.value }; updateField("price_comparison", u); }} className="flex-1 px-2 py-2 border rounded text-sm" placeholder="than most phones in this range" />
-                <button type="button" onClick={() => updateField("price_comparison", formData.price_comparison.filter((_, idx) => idx !== i))} className="p-1 text-red-500"><Trash2 className="w-4 h-4" /></button>
+                <input
+                  type="text"
+                  value={c.label || ""}
+                  onChange={(e) => {
+                    const u = [...formData.price_comparison];
+                    u[i] = { ...u[i], label: e.target.value };
+                    updateField("price_comparison", u);
+                  }}
+                  className="w-36 px-2 py-2 border rounded text-sm"
+                  placeholder="Better battery life"
+                />
+                <input
+                  type="text"
+                  value={c.text || ""}
+                  onChange={(e) => {
+                    const u = [...formData.price_comparison];
+                    u[i] = { ...u[i], text: e.target.value };
+                    updateField("price_comparison", u);
+                  }}
+                  className="flex-1 px-2 py-2 border rounded text-sm"
+                  placeholder="than most phones in this range"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField(
+                      "price_comparison",
+                      formData.price_comparison.filter((_, idx) => idx !== i)
+                    )
+                  }
+                  className="p-1 text-red-500"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             ))}
-            <button type="button" onClick={() => updateField("price_comparison", [...formData.price_comparison, { type: "better", label: "", text: "" }])} className="text-sm text-emerald-600 flex items-center gap-1"><Plus className="w-4 h-4" />Add</button>
+            <button
+              type="button"
+              onClick={() =>
+                updateField("price_comparison", [
+                  ...formData.price_comparison,
+                  { type: "better", label: "", text: "" },
+                ])
+              }
+              className="text-sm text-emerald-600 flex items-center gap-1"
+            >
+              <Plus className="w-4 h-4" />
+              Add
+            </button>
           </div>
         </SectionCard>
 
         {/* 8. Final Recommendation */}
-        <SectionCard number="8" title="Final Recommendation" subtitle="Decision closure">
+        <SectionCard
+          number="8"
+          title="Final Recommendation"
+          subtitle="Decision closure"
+        >
           <div className="pt-4">
-            <TextareaField label="Recommendation" value={formData.final_recommendation} onChange={(v) => updateField("final_recommendation", v)} placeholder="Buy the Samsung Galaxy A35 if your priority is battery life..." rows={2} />
+            <TextareaField
+              label="Recommendation"
+              value={formData.final_recommendation}
+              onChange={(v) => updateField("final_recommendation", v)}
+              placeholder="Buy the Samsung Galaxy A35 if your priority is battery life..."
+              rows={2}
+            />
           </div>
         </SectionCard>
 
         {/* 9. Alternatives */}
-        <SectionCard number="9" title="Similar Phones to Consider" subtitle="Best alternatives">
+        <SectionCard
+          number="9"
+          title="Similar Phones to Consider"
+          subtitle="Best alternatives"
+        >
           <div className="pt-4 space-y-2">
             {formData.alternatives.map((a, i) => (
-              <div key={i} className="flex gap-2 items-center bg-gray-50 p-2 rounded">
-                <input type="text" value={a.name || ""} onChange={(e) => { const u = [...formData.alternatives]; u[i] = { ...u[i], name: e.target.value }; updateField("alternatives", u); }} className="w-40 px-2 py-2 border rounded text-sm" placeholder="Xiaomi Redmi Note 13 Pro" />
-                <input type="text" value={a.slug || ""} onChange={(e) => { const u = [...formData.alternatives]; u[i] = { ...u[i], slug: e.target.value }; updateField("alternatives", u); }} className="w-40 px-2 py-2 border rounded text-sm" placeholder="xiaomi-redmi-note-13-pro" />
-                <input type="text" value={a.reason || ""} onChange={(e) => { const u = [...formData.alternatives]; u[i] = { ...u[i], reason: e.target.value }; updateField("alternatives", u); }} className="flex-1 px-2 py-2 border rounded text-sm" placeholder="Better camera for AED 200 less" />
-                <button type="button" onClick={() => updateField("alternatives", formData.alternatives.filter((_, idx) => idx !== i))} className="p-1 text-red-500"><Trash2 className="w-4 h-4" /></button>
+              <div
+                key={i}
+                className="flex gap-2 items-center bg-gray-50 p-2 rounded"
+              >
+                <input
+                  type="text"
+                  value={a.name || ""}
+                  onChange={(e) => {
+                    const u = [...formData.alternatives];
+                    u[i] = { ...u[i], name: e.target.value };
+                    updateField("alternatives", u);
+                  }}
+                  className="w-40 px-2 py-2 border rounded text-sm"
+                  placeholder="Xiaomi Redmi Note 13 Pro"
+                />
+                <input
+                  type="text"
+                  value={a.slug || ""}
+                  onChange={(e) => {
+                    const u = [...formData.alternatives];
+                    u[i] = { ...u[i], slug: e.target.value };
+                    updateField("alternatives", u);
+                  }}
+                  className="w-40 px-2 py-2 border rounded text-sm"
+                  placeholder="xiaomi-redmi-note-13-pro"
+                />
+                <input
+                  type="text"
+                  value={a.reason || ""}
+                  onChange={(e) => {
+                    const u = [...formData.alternatives];
+                    u[i] = { ...u[i], reason: e.target.value };
+                    updateField("alternatives", u);
+                  }}
+                  className="flex-1 px-2 py-2 border rounded text-sm"
+                  placeholder="Better camera for AED 200 less"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField(
+                      "alternatives",
+                      formData.alternatives.filter((_, idx) => idx !== i)
+                    )
+                  }
+                  className="p-1 text-red-500"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             ))}
-            <button type="button" onClick={() => updateField("alternatives", [...formData.alternatives, { name: "", slug: "", reason: "", image: "/mobile1.jpg" }])} className="text-sm text-emerald-600 flex items-center gap-1"><Plus className="w-4 h-4" />Add</button>
+            <button
+              type="button"
+              onClick={() =>
+                updateField("alternatives", [
+                  ...formData.alternatives,
+                  { name: "", slug: "", reason: "", image: "/mobile1.jpg" },
+                ])
+              }
+              className="text-sm text-emerald-600 flex items-center gap-1"
+            >
+              <Plus className="w-4 h-4" />
+              Add
+            </button>
           </div>
         </SectionCard>
 
         {/* 10. Specifications */}
-        <SectionCard number="10" title="Specifications" subtitle="Full specs (JSON format)">
+        <SectionCard
+          number="10"
+          title="Specifications"
+          subtitle="Full specs (JSON format)"
+        >
           <div className="pt-4 space-y-4">
             {/* GSMArena Scraper */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -857,30 +1459,36 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
                       alert("Please enter a GSMArena URL");
                       return;
                     }
-                    
+
                     const btn = document.getElementById("scrape-btn");
                     btn.disabled = true;
                     btn.textContent = "Scraping...";
-                    
+
                     try {
                       const response = await fetch("/api/scrape-specs", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ url }),
                       });
-                      
+
                       const result = await response.json();
-                      
+
                       if (result.error) {
                         alert("Error: " + result.error);
                       } else if (result.specs) {
-                        const formattedSpecs = JSON.stringify(result.specs, null, 2);
+                        const formattedSpecs = JSON.stringify(
+                          result.specs,
+                          null,
+                          2
+                        );
                         setSpecsText(formattedSpecs);
                         try {
                           updateField("specs", result.specs);
                         } catch {}
                         setHasUnsavedChanges(true);
-                        alert("✅ Specs scraped successfully! Review and edit as needed.");
+                        alert(
+                          "✅ Specs scraped successfully! Review and edit as needed."
+                        );
                       }
                     } catch (err) {
                       alert("Failed to scrape: " + err.message);
@@ -896,7 +1504,8 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
                 </button>
               </div>
               <p className="text-xs text-blue-600 mt-2">
-                Paste the GSMArena phone URL and click "Scrape Specs" to auto-fill specifications
+                Paste the GSMArena phone URL and click "Scrape Specs" to
+                auto-fill specifications
               </p>
             </div>
 
@@ -905,19 +1514,22 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Specifications JSON
               </label>
-              <textarea 
-                value={specsText} 
-                onChange={(e) => { 
-                  setSpecsText(e.target.value); 
-                  setHasUnsavedChanges(true); 
-                  try { updateField("specs", JSON.parse(e.target.value)); } catch {} 
-                }} 
-                rows={16} 
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-xs" 
-                placeholder='{"Display": {"Size": "6.6 inches", "Type": "Super AMOLED"}, ...}' 
+              <textarea
+                value={specsText}
+                onChange={(e) => {
+                  setSpecsText(e.target.value);
+                  setHasUnsavedChanges(true);
+                  try {
+                    updateField("specs", JSON.parse(e.target.value));
+                  } catch {}
+                }}
+                rows={16}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-xs"
+                placeholder='{"Display": {"Size": "6.6 inches", "Type": "Super AMOLED"}, ...}'
               />
               <p className="text-xs text-gray-500 mt-1">
-                Use categories: Display, Performance, Camera, Battery, Network, Build, Software
+                Use categories: Display, Performance, Camera, Battery, Network,
+                Build, Software
               </p>
             </div>
           </div>
@@ -930,30 +1542,119 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
               <div key={i} className="bg-gray-50 p-3 rounded-lg">
                 <div className="flex justify-between mb-2">
                   <span className="text-sm font-medium">Q{i + 1}</span>
-                  <button type="button" onClick={() => updateField("faqs", formData.faqs.filter((_, idx) => idx !== i))} className="text-red-500"><Trash2 className="w-4 h-4" /></button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateField(
+                        "faqs",
+                        formData.faqs.filter((_, idx) => idx !== i)
+                      )
+                    }
+                    className="text-red-500"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
-                <input type="text" value={f.question || ""} onChange={(e) => { const u = [...formData.faqs]; u[i] = { ...u[i], question: e.target.value }; updateField("faqs", u); }} className="w-full px-2 py-2 border rounded text-sm mb-2" placeholder="Does it support UAE 5G networks?" />
-                <textarea value={f.answer || ""} onChange={(e) => { const u = [...formData.faqs]; u[i] = { ...u[i], answer: e.target.value }; updateField("faqs", u); }} rows={2} className="w-full px-2 py-2 border rounded text-sm" placeholder="Yes, the Samsung Galaxy A35 5G supports..." />
+                <input
+                  type="text"
+                  value={f.question || ""}
+                  onChange={(e) => {
+                    const u = [...formData.faqs];
+                    u[i] = { ...u[i], question: e.target.value };
+                    updateField("faqs", u);
+                  }}
+                  className="w-full px-2 py-2 border rounded text-sm mb-2"
+                  placeholder="Does it support UAE 5G networks?"
+                />
+                <textarea
+                  value={f.answer || ""}
+                  onChange={(e) => {
+                    const u = [...formData.faqs];
+                    u[i] = { ...u[i], answer: e.target.value };
+                    updateField("faqs", u);
+                  }}
+                  rows={2}
+                  className="w-full px-2 py-2 border rounded text-sm"
+                  placeholder="Yes, the Samsung Galaxy A35 5G supports..."
+                />
               </div>
             ))}
-            <button type="button" onClick={() => updateField("faqs", [...formData.faqs, { question: "", answer: "" }])} className="text-sm text-emerald-600 flex items-center gap-1"><Plus className="w-4 h-4" />Add FAQ</button>
+            <button
+              type="button"
+              onClick={() =>
+                updateField("faqs", [
+                  ...formData.faqs,
+                  { question: "", answer: "" },
+                ])
+              }
+              className="text-sm text-emerald-600 flex items-center gap-1"
+            >
+              <Plus className="w-4 h-4" />
+              Add FAQ
+            </button>
           </div>
         </SectionCard>
 
         {/* 12. Related Links */}
-        <SectionCard number="12" title="You May Also Like" subtitle="Internal links for SEO">
+        <SectionCard
+          number="12"
+          title="You May Also Like"
+          subtitle="Internal links for SEO"
+        >
           <div className="pt-4 space-y-2">
             {formData.related_links.map((l, i) => (
               <div key={i} className="flex gap-2">
-                <input type="text" value={l.href || ""} onChange={(e) => { const u = [...formData.related_links]; u[i] = { ...u[i], href: e.target.value }; updateField("related_links", u); }} className="w-1/3 px-2 py-2 border rounded text-sm" placeholder="/phones?brand=samsung" />
-                <input type="text" value={l.label || ""} onChange={(e) => { const u = [...formData.related_links]; u[i] = { ...u[i], label: e.target.value }; updateField("related_links", u); }} className="flex-1 px-2 py-2 border rounded text-sm" placeholder="All Samsung Phones" />
-                <button type="button" onClick={() => updateField("related_links", formData.related_links.filter((_, idx) => idx !== i))} className="p-1 text-red-500"><Trash2 className="w-4 h-4" /></button>
+                <input
+                  type="text"
+                  value={l.href || ""}
+                  onChange={(e) => {
+                    const u = [...formData.related_links];
+                    u[i] = { ...u[i], href: e.target.value };
+                    updateField("related_links", u);
+                  }}
+                  className="w-1/3 px-2 py-2 border rounded text-sm"
+                  placeholder="/phones?brand=samsung"
+                />
+                <input
+                  type="text"
+                  value={l.label || ""}
+                  onChange={(e) => {
+                    const u = [...formData.related_links];
+                    u[i] = { ...u[i], label: e.target.value };
+                    updateField("related_links", u);
+                  }}
+                  className="flex-1 px-2 py-2 border rounded text-sm"
+                  placeholder="All Samsung Phones"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField(
+                      "related_links",
+                      formData.related_links.filter((_, idx) => idx !== i)
+                    )
+                  }
+                  className="p-1 text-red-500"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             ))}
-            <button type="button" onClick={() => updateField("related_links", [...formData.related_links, { href: "", label: "" }])} className="text-sm text-emerald-600 flex items-center gap-1"><Plus className="w-4 h-4" />Add Link</button>
+            <button
+              type="button"
+              onClick={() =>
+                updateField("related_links", [
+                  ...formData.related_links,
+                  { href: "", label: "" },
+                ])
+              }
+              className="text-sm text-emerald-600 flex items-center gap-1"
+            >
+              <Plus className="w-4 h-4" />
+              Add Link
+            </button>
           </div>
         </SectionCard>
-
       </div>
     </AdminLayoutWrapper>
   );
