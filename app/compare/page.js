@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { Suspense, useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   ArrowRight,
@@ -88,7 +88,7 @@ function generateComparisonVerdict(phones) {
   return verdict;
 }
 
-export default function ComparePage() {
+function ComparePage() {
   const searchParams = useSearchParams();
   const phonesParam = searchParams.get("phones");
   
@@ -528,5 +528,28 @@ export default function ComparePage() {
       />
     </div>
     </PublicLayout>
+  );
+}
+
+// Loading fallback for Suspense
+function CompareLoading() {
+  return (
+    <PublicLayout>
+      <div className="min-h-screen bg-linear-to-b from-background via-background to-muted/20 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading comparison...</p>
+        </div>
+      </div>
+    </PublicLayout>
+  );
+}
+
+// Wrap in Suspense for useSearchParams
+export default function ComparePageWrapper() {
+  return (
+    <Suspense fallback={<CompareLoading />}>
+      <ComparePage />
+    </Suspense>
   );
 }

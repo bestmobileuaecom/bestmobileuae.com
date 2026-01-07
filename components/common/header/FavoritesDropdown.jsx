@@ -120,7 +120,7 @@ export default function FavoritesDropdown() {
       <Button
         variant="ghost"
         size="icon"
-        className="hidden md:flex h-10 w-10 rounded-lg border border-border bg-muted hover:bg-border text-foreground relative transition-colors"
+        className="h-10 w-10 rounded-lg border border-border bg-muted hover:bg-border text-foreground relative transition-colors"
       >
         <Heart className="h-5 w-5" />
       </Button>
@@ -134,7 +134,7 @@ export default function FavoritesDropdown() {
         variant="ghost"
         size="icon"
         onClick={handleToggle}
-        className="hidden md:flex h-10 w-10 rounded-lg border border-border bg-muted hover:bg-border text-foreground relative transition-colors"
+        className="h-10 w-10 rounded-lg border border-border bg-muted hover:bg-border text-foreground relative transition-colors"
       >
         <Heart className={`h-5 w-5 ${likedSlugs.length > 0 ? "fill-red-500 text-red-500" : ""}`} />
         {likedSlugs.length > 0 && (
@@ -146,7 +146,7 @@ export default function FavoritesDropdown() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-lg shadow-xl z-50 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-80 bg-card border border-border rounded-lg shadow-xl z-50 overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted">
             <h3 className="font-semibold text-sm text-foreground flex items-center gap-2">

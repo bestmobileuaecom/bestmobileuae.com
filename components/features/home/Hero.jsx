@@ -159,17 +159,17 @@ export default function Hero({ trendingPhones = [] }) {
                 </div>
 
                 {/* Minimal Stats */}
-                <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                <div className="flex items-center gap-3 sm:gap-6 text-xs sm:text-sm text-muted-foreground flex-wrap">
                   <div className="flex items-center gap-1.5">
                     <span className="font-semibold text-foreground">1,200+</span>
                     <span>Phones</span>
                   </div>
-                  <div className="w-1 h-1 rounded-full bg-border" />
+                  <div className="w-1 h-1 rounded-full bg-border hidden sm:block" />
                   <div className="flex items-center gap-1.5">
                     <span className="font-semibold text-foreground">Expert</span>
                     <span>Reviews</span>
                   </div>
-                  <div className="w-1 h-1 rounded-full bg-border" />
+                  <div className="w-1 h-1 rounded-full bg-border hidden sm:block" />
                   <div className="flex items-center gap-1.5">
                     <span className="font-semibold text-foreground">Daily</span>
                     <span>Updates</span>

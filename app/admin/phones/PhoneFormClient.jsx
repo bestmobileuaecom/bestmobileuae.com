@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AdminLayoutWrapper } from "@/components/admin";
+import { ImageUpload } from "@/components/admin/forms";
 import { createClient } from "@/lib/supabase/client";
 import {
   Save,
@@ -90,7 +91,7 @@ function TextareaField({ label, value, onChange, placeholder, rows = 3, hint }) 
   );
 }
 
-export default function PhoneFormClient({ user, brands, phone }) {
+export default function PhoneFormClient({ user, brands, stores = [], phone }) {
   const isEdit = !!phone;
   const router = useRouter();
   const supabase = createClient();
@@ -175,10 +176,28 @@ export default function PhoneFormClient({ user, brands, phone }) {
     best_for: phone?.best_for || [],
   });
 
-  // Store prices (separate state)
+  // Store prices (separate state) - now uses store_id reference
   const [storePrices, setStorePrices] = useState(
-    phone?.storePrices || [{ store_name: "", price: "", price_value: "", url: "" }]
+    phone?.storePrices?.length 
+      ? phone.storePrices.map(p => ({
+          store_id: p.store_id || "",
+          store_name: p.store_name || "",
+          price_value: p.price_value || "",
+          url: p.url || ""
+        }))
+      : [{ store_id: "", store_name: "", price_value: "", url: "" }]
   );
+
+  // Helper to format price as AED X,XXX
+  const formatPrice = (value) => {
+    if (!value) return "";
+    const num = Number(value);
+    if (isNaN(num)) return "";
+    return `AED ${num.toLocaleString()}`;
+  };
+
+  // Helper to get store by id
+  const getStoreById = (storeId) => stores.find(s => s.id === storeId);
 
   // Specs as text for easy editing
   const [specsText, setSpecsText] = useState(
@@ -307,10 +326,20 @@ export default function PhoneFormClient({ user, brands, phone }) {
 
       if (savedId) {
         await supabase.from("phone_store_prices").delete().eq("phone_id", savedId);
-        const validPrices = storePrices.filter((p) => p.store_name && p.price);
+        const validPrices = storePrices.filter((p) => (p.store_id || p.store_name) && p.price_value);
         if (validPrices.length > 0) {
           await supabase.from("phone_store_prices").insert(
-            validPrices.map((p) => ({ phone_id: savedId, store_name: p.store_name, price: p.price, price_value: Number(p.price_value) || 0, url: p.url }))
+            validPrices.map((p) => {
+              const store = p.store_id ? getStoreById(p.store_id) : null;
+              return { 
+                phone_id: savedId, 
+                store_id: p.store_id || null,
+                store_name: store?.name || p.store_name, 
+                price: formatPrice(p.price_value),
+                price_value: Number(p.price_value) || 0, 
+                url: p.url 
+              };
+            })
           );
         }
       }
@@ -334,7 +363,7 @@ export default function PhoneFormClient({ user, brands, phone }) {
     const phoneData = prepareDataForSave(status);
     
     // Calculate lowest store price for price alert comparison
-    const validPricesForCheck = storePrices.filter(p => p.store_name && p.price_value > 0);
+    const validPricesForCheck = storePrices.filter(p => (p.store_id || p.store_name) && p.price_value > 0);
     const newLowestPrice = validPricesForCheck.length > 0 
       ? Math.min(...validPricesForCheck.map(p => Number(p.price_value)))
       : null;
@@ -352,10 +381,20 @@ export default function PhoneFormClient({ user, brands, phone }) {
       }
 
       await supabase.from("phone_store_prices").delete().eq("phone_id", savedId);
-      const validPrices = storePrices.filter((p) => p.store_name && p.price);
+      const validPrices = storePrices.filter((p) => (p.store_id || p.store_name) && p.price_value);
       if (validPrices.length > 0) {
         await supabase.from("phone_store_prices").insert(
-          validPrices.map((p) => ({ phone_id: savedId, store_name: p.store_name, price: p.price, price_value: Number(p.price_value) || 0, url: p.url }))
+          validPrices.map((p) => {
+            const store = p.store_id ? getStoreById(p.store_id) : null;
+            return { 
+              phone_id: savedId, 
+              store_id: p.store_id || null,
+              store_name: store?.name || p.store_name, 
+              price: formatPrice(p.price_value),
+              price_value: Number(p.price_value) || 0, 
+              url: p.url 
+            };
+          })
         );
       }
 
@@ -456,7 +495,12 @@ export default function PhoneFormClient({ user, brands, phone }) {
                 <option value="premium">Premium</option>
               </select>
             </div>
-            <InputField label="Image URL" value={formData.image_url} onChange={(v) => updateField("image_url", v)} placeholder="/mobile1.jpg" />
+            <ImageUpload 
+              label="Phone Image" 
+              value={formData.image_url} 
+              onChange={(v) => updateField("image_url", v)}
+              bucket="phone-images"
+            />
           </div>
         </SectionCard>
 
@@ -522,17 +566,104 @@ export default function PhoneFormClient({ user, brands, phone }) {
 
         {/* 3. Store Prices */}
         <SectionCard number="3" title="Store Prices" subtitle="Where to Buy in UAE">
-          <div className="pt-4 space-y-2">
-            {storePrices.map((sp, i) => (
-              <div key={i} className="grid grid-cols-12 gap-2 items-center bg-gray-50 p-2 rounded-lg">
-                <input type="text" value={sp.store_name} onChange={(e) => { const u = [...storePrices]; u[i] = { ...u[i], store_name: e.target.value }; setStorePrices(u); setHasUnsavedChanges(true); }} className="col-span-3 px-2 py-2 border border-gray-300 rounded text-sm" placeholder="Noon" />
-                <input type="text" value={sp.price} onChange={(e) => { const u = [...storePrices]; u[i] = { ...u[i], price: e.target.value }; setStorePrices(u); setHasUnsavedChanges(true); }} className="col-span-3 px-2 py-2 border border-gray-300 rounded text-sm" placeholder="AED 1,179" />
-                <input type="number" value={sp.price_value} onChange={(e) => { const u = [...storePrices]; u[i] = { ...u[i], price_value: e.target.value }; setStorePrices(u); setHasUnsavedChanges(true); }} className="col-span-2 px-2 py-2 border border-gray-300 rounded text-sm" placeholder="1179" />
-                <input type="text" value={sp.url || ""} onChange={(e) => { const u = [...storePrices]; u[i] = { ...u[i], url: e.target.value }; setStorePrices(u); setHasUnsavedChanges(true); }} className="col-span-3 px-2 py-2 border border-gray-300 rounded text-sm" placeholder="https://..." />
-                <button type="button" onClick={() => { setStorePrices(storePrices.filter((_, idx) => idx !== i)); setHasUnsavedChanges(true); }} className="col-span-1 p-2 text-red-500"><Trash2 className="w-4 h-4" /></button>
-              </div>
-            ))}
-            <button type="button" onClick={() => { setStorePrices([...storePrices, { store_name: "", price: "", price_value: "", url: "" }]); setHasUnsavedChanges(true); }} className="text-sm text-emerald-600 flex items-center gap-1"><Plus className="w-4 h-4" />Add Store</button>
+          <div className="pt-4 space-y-3">
+            {/* Header row */}
+            <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-500 px-2">
+              <div className="col-span-3">Store</div>
+              <div className="col-span-2">Price (AED)</div>
+              <div className="col-span-2">Formatted</div>
+              <div className="col-span-4">Buy Link</div>
+              <div className="col-span-1"></div>
+            </div>
+            {storePrices.map((sp, i) => {
+              const selectedStore = sp.store_id ? getStoreById(sp.store_id) : null;
+              return (
+                <div key={i} className="grid grid-cols-12 gap-2 items-center bg-gray-50 p-3 rounded-lg">
+                  {/* Store Dropdown with Logo */}
+                  <div className="col-span-3">
+                    <div className="flex items-center gap-2">
+                      {selectedStore?.logo_url && (
+                        <img src={selectedStore.logo_url} alt={selectedStore.name} className="w-6 h-6 object-contain" />
+                      )}
+                      <select 
+                        value={sp.store_id || ""} 
+                        onChange={(e) => { 
+                          const u = [...storePrices]; 
+                          const store = stores.find(s => s.id === e.target.value);
+                          u[i] = { 
+                            ...u[i], 
+                            store_id: e.target.value,
+                            store_name: store?.name || "",
+                            url: store?.website_url || u[i].url
+                          }; 
+                          setStorePrices(u); 
+                          setHasUnsavedChanges(true); 
+                        }} 
+                        className="flex-1 px-2 py-2 border border-gray-300 rounded text-sm bg-white"
+                      >
+                        <option value="">Select store...</option>
+                        {stores.map((s) => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  {/* Price Value - Single input */}
+                  <input 
+                    type="number" 
+                    value={sp.price_value} 
+                    onChange={(e) => { 
+                      const u = [...storePrices]; 
+                      u[i] = { ...u[i], price_value: e.target.value }; 
+                      setStorePrices(u); 
+                      setHasUnsavedChanges(true); 
+                    }} 
+                    className="col-span-2 px-2 py-2 border border-gray-300 rounded text-sm" 
+                    placeholder="2159" 
+                  />
+                  {/* Auto-formatted price display */}
+                  <div className="col-span-2 px-2 py-2 text-sm text-gray-600 bg-gray-100 rounded">
+                    {formatPrice(sp.price_value) || "AED 0"}
+                  </div>
+                  {/* URL */}
+                  <input 
+                    type="text" 
+                    value={sp.url || ""} 
+                    onChange={(e) => { 
+                      const u = [...storePrices]; 
+                      u[i] = { ...u[i], url: e.target.value }; 
+                      setStorePrices(u); 
+                      setHasUnsavedChanges(true); 
+                    }} 
+                    className="col-span-4 px-2 py-2 border border-gray-300 rounded text-sm" 
+                    placeholder="https://www.noon.com/product/..." 
+                  />
+                  {/* Delete */}
+                  <button 
+                    type="button" 
+                    onClick={() => { setStorePrices(storePrices.filter((_, idx) => idx !== i)); setHasUnsavedChanges(true); }} 
+                    className="col-span-1 p-2 text-red-500 hover:bg-red-50 rounded"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              );
+            })}
+            <button 
+              type="button" 
+              onClick={() => { 
+                setStorePrices([...storePrices, { store_id: "", store_name: "", price_value: "", url: "" }]); 
+                setHasUnsavedChanges(true); 
+              }} 
+              className="text-sm text-emerald-600 flex items-center gap-1 hover:text-emerald-700"
+            >
+              <Plus className="w-4 h-4" />Add Store
+            </button>
+            {stores.length === 0 && (
+              <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
+                💡 No stores found. Add stores in Settings → Stores tab first.
+              </p>
+            )}
           </div>
         </SectionCard>
 
@@ -645,9 +776,91 @@ export default function PhoneFormClient({ user, brands, phone }) {
 
         {/* 10. Specifications */}
         <SectionCard number="10" title="Specifications" subtitle="Full specs (JSON format)">
-          <div className="pt-4">
-            <textarea value={specsText} onChange={(e) => { setSpecsText(e.target.value); setHasUnsavedChanges(true); try { updateField("specs", JSON.parse(e.target.value)); } catch {} }} rows={12} className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-xs" placeholder='{"Display": {"Size": "6.6 inches", "Type": "Super AMOLED"}, ...}' />
-            <p className="text-xs text-gray-500 mt-1">Use categories: Display, Performance, Camera, Battery, Network, Build, Software</p>
+          <div className="pt-4 space-y-4">
+            {/* GSMArena Scraper */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <label className="block text-sm font-medium text-blue-800 mb-2">
+                🔍 Auto-fill from GSMArena
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  id="gsmarena-url"
+                  placeholder="https://www.gsmarena.com/apple_iphone_16-12920.php"
+                  className="flex-1 px-3 py-2 border border-blue-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const urlInput = document.getElementById("gsmarena-url");
+                    const url = urlInput?.value;
+                    if (!url) {
+                      alert("Please enter a GSMArena URL");
+                      return;
+                    }
+                    
+                    const btn = document.getElementById("scrape-btn");
+                    btn.disabled = true;
+                    btn.textContent = "Scraping...";
+                    
+                    try {
+                      const response = await fetch("/api/scrape-specs", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ url }),
+                      });
+                      
+                      const result = await response.json();
+                      
+                      if (result.error) {
+                        alert("Error: " + result.error);
+                      } else if (result.specs) {
+                        const formattedSpecs = JSON.stringify(result.specs, null, 2);
+                        setSpecsText(formattedSpecs);
+                        try {
+                          updateField("specs", result.specs);
+                        } catch {}
+                        setHasUnsavedChanges(true);
+                        alert("✅ Specs scraped successfully! Review and edit as needed.");
+                      }
+                    } catch (err) {
+                      alert("Failed to scrape: " + err.message);
+                    } finally {
+                      btn.disabled = false;
+                      btn.textContent = "Scrape Specs";
+                    }
+                  }}
+                  id="scrape-btn"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                >
+                  Scrape Specs
+                </button>
+              </div>
+              <p className="text-xs text-blue-600 mt-2">
+                Paste the GSMArena phone URL and click "Scrape Specs" to auto-fill specifications
+              </p>
+            </div>
+
+            {/* Manual JSON Editor */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Specifications JSON
+              </label>
+              <textarea 
+                value={specsText} 
+                onChange={(e) => { 
+                  setSpecsText(e.target.value); 
+                  setHasUnsavedChanges(true); 
+                  try { updateField("specs", JSON.parse(e.target.value)); } catch {} 
+                }} 
+                rows={16} 
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-xs" 
+                placeholder='{"Display": {"Size": "6.6 inches", "Type": "Super AMOLED"}, ...}' 
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Use categories: Display, Performance, Camera, Battery, Network, Build, Software
+              </p>
+            </div>
           </div>
         </SectionCard>
 

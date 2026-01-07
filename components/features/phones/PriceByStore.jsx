@@ -1,36 +1,16 @@
 /**
  * Price by Store - Simple price comparison
- * Shows where to buy and current prices with store logos
+ * Shows where to buy and current prices with store logos from database
  */
 import Image from "next/image";
 import { ExternalLink, TrendingDown, Clock } from "lucide-react";
 
-// Store logo mappings
-const storeLogos = {
-  noon: "/noon.svg",
-  amazon: "/amazon.svg",
-  jumbo: "/stores/jumbo.png",
-  lulu: "/stores/lulu.png",
-  carrefour: "/stores/carrefour.png",
-  "virgin megastore": "/stores/virgin.png",
-  emax: "/stores/emax.png",
-  lazada: "/stores/lazada.png",
-  shopee: "/stores/shopee.png",
-  kimstore: "/stores/kimstore.png",
-  abenson: "/stores/abenson.png",
-};
-
-const getStoreLogo = (storeName) => {
-  const key = storeName.toLowerCase();
-  return storeLogos[key] || null;
-};
-
-export default function PriceByStore({ storePrices }) {
+export default function PriceByStore({ storePrices, phoneName = "this phone" }) {
   if (!storePrices || storePrices.length === 0) return null;
 
   // Find the lowest price to mark as "Best Price"
   const prices = storePrices.map((item) => {
-    const numericPrice = parseFloat(item.price.replace(/[^0-9.]/g, ""));
+    const numericPrice = parseFloat(item.price?.replace(/[^0-9.]/g, "") || "0");
     return { ...item, numericPrice };
   });
   const lowestPrice = Math.min(...prices.map((p) => p.numericPrice));
@@ -40,7 +20,7 @@ export default function PriceByStore({ storePrices }) {
       <div className="bg-card rounded-xl md:rounded-2xl border border-border shadow-sm overflow-hidden">
         <div className="flex items-center justify-between p-4 md:p-6">
           <h2 className="text-base md:text-lg font-semibold text-foreground">
-            Where to Buy Samsung Galaxy A35 5G in UAE
+            Where to Buy {phoneName} in UAE
           </h2>
           <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
             <Clock className="w-3 h-3" />
@@ -50,7 +30,8 @@ export default function PriceByStore({ storePrices }) {
         <div className="px-4 md:px-6 pb-4 md:pb-6 -mt-2">
           {prices.map((item, index) => {
             const isBestPrice = item.numericPrice === lowestPrice;
-            const logo = getStoreLogo(item.store);
+            // Use logo_url from database (from stores table)
+            const logo = item.logo_url;
 
             return (
               <a

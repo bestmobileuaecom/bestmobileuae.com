@@ -20,5 +20,12 @@ export default async function NewPhonePage() {
     .eq("is_active", true)
     .order("sort_order");
 
-  return <PhoneFormClient user={user} brands={brands || []} phone={null} />;
+  // Fetch stores for dropdown
+  const { data: stores } = await supabase
+    .from("stores")
+    .select("id, name, slug, logo_url, website_url")
+    .eq("is_active", true)
+    .order("sort_order");
+
+  return <PhoneFormClient user={user} brands={brands || []} stores={stores || []} phone={null} />;
 }

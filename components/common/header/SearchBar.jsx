@@ -10,6 +10,7 @@ export default function SearchBar({
   placeholder = "Search phones...",
   className,
   inputClassName,
+  onSelect,
 }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState({ phones: [], articles: [] });
@@ -66,6 +67,7 @@ export default function SearchBar({
     setQuery("");
     setIsOpen(false);
     setResults({ phones: [], articles: [] });
+    if (onSelect) onSelect();
   };
 
   return (

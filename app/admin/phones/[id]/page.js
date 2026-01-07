@@ -39,10 +39,18 @@ export default async function EditPhonePage({ params }) {
     .eq("is_active", true)
     .order("sort_order");
 
+  // Fetch stores for dropdown
+  const { data: stores } = await supabase
+    .from("stores")
+    .select("id, name, slug, logo_url, website_url")
+    .eq("is_active", true)
+    .order("sort_order");
+
   return (
     <PhoneFormClient
       user={user}
       brands={brands || []}
+      stores={stores || []}
       phone={{ ...phone, storePrices: storePrices || [] }}
     />
   );

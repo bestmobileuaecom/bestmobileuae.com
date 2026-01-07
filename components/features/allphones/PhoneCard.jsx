@@ -32,18 +32,19 @@ export default function PhoneCard({ phone, onCompare, isInCompare, rank }) {
 
   return (
     <div className="group bg-card rounded-2xl border border-border/60 hover:border-primary/30 hover:shadow-xl transition-all duration-300 overflow-hidden relative">
-      {rank && (
-        <div className="absolute top-3 left-3 z-10 w-7 h-7 flex items-center justify-center bg-primary text-primary-foreground rounded-lg text-xs font-bold shadow-md">
-          #{rank}
-        </div>
-      )}
-
       <div className="flex items-center justify-between px-4 pt-4">
-        <span
-          className={`text-xs font-semibold px-3 py-1 rounded-full ${scoreInfo.color}`}
-        >
-          ⭐ {scoreInfo.label}
-        </span>
+        <div className="flex items-center gap-2">
+          {rank && (
+            <div className="w-7 h-7 flex items-center justify-center bg-primary text-primary-foreground rounded-lg text-xs font-bold shadow-md">
+              #{rank}
+            </div>
+          )}
+          <span
+            className={`text-xs font-semibold px-3 py-1 rounded-full ${scoreInfo.color}`}
+          >
+            ⭐ {scoreInfo.label}
+          </span>
+        </div>
         <div className="flex items-center gap-1 text-sm">
           <span className="font-bold text-foreground">{score}</span>
           <span className="text-xs text-muted-foreground">/10</span>

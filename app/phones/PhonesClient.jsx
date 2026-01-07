@@ -222,19 +222,15 @@ export default function PhonesClient() {
     }
 
     if (activeGoal) {
-      // Sort by relevant score based on goal
+      // Filter by relevant score based on goal, then sort by that score
       if (activeGoal === "camera") {
         result = result.filter((p) => p.scores?.camera >= 7);
-        result.sort((a, b) => (b.scores?.camera || 0) - (a.scores?.camera || 0));
       } else if (activeGoal === "battery") {
         result = result.filter((p) => p.scores?.battery >= 7);
-        result.sort((a, b) => (b.scores?.battery || 0) - (a.scores?.battery || 0));
       } else if (activeGoal === "gaming") {
         result = result.filter((p) => p.scores?.performance >= 7);
-        result.sort((a, b) => (b.scores?.performance || 0) - (a.scores?.performance || 0));
       } else if (activeGoal === "value") {
         result = result.filter((p) => p.scores?.value >= 7);
-        result.sort((a, b) => (b.scores?.value || 0) - (a.scores?.value || 0));
       }
     }
 
@@ -242,15 +238,10 @@ export default function PhonesClient() {
       (phone) => phone.price >= activeBudget.min && phone.price <= activeBudget.max
     );
 
-    if (!activeGoal) {
-      if (activeBudget.label !== "Any Budget") {
-        result.sort((a, b) => (b.scores?.value || 0) - (a.scores?.value || 0));
-      } else {
-        result.sort(
-          (a, b) => (b.overallScore?.rating || 0) - (a.overallScore?.rating || 0)
-        );
-      }
-    }
+    // Always sort by overall score (highest first) so ranking is correct
+    result.sort(
+      (a, b) => (b.overallScore?.rating || 0) - (a.overallScore?.rating || 0)
+    );
 
     return result;
   }, [phones, searchQuery, activeBrand, activeGoal, activeBudget]);

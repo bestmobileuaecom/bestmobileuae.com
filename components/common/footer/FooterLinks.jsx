@@ -4,28 +4,26 @@ const linkSections = [
   {
     title: "Browse",
     links: [
-      { label: "All phones", href: "/phones" },
-      { label: "Latest launches", href: "/phones" },
-      { label: "Compare phones", href: "/phones" },
-      { label: "Price tracker", href: "/phones" },
+      { label: "All Phones", href: "/phones" },
+      { label: "Compare Phones", href: "/compare" },
+      { label: "News & Reviews", href: "/blogs" },
     ],
   },
   {
     title: "Categories",
     links: [
-      { label: "Budget phones", href: "/phones" },
-      { label: "Gaming phones", href: "/phones" },
-      { label: "Flagship phones", href: "/phones" },
-      { label: "Camera phones", href: "/phones" },
+      { label: "Budget Phones", href: "/phones?budget=1500" },
+      { label: "Gaming Phones", href: "/phones?priority=gaming" },
+      { label: "Flagship Phones", href: "/phones?budget=flagship" },
+      { label: "Camera Phones", href: "/phones?priority=camera" },
     ],
   },
   {
     title: "Company",
     links: [
-      { label: "About us", href: "#" },
-      { label: "Blog", href: "#" },
-      { label: "Contact", href: "#" },
-      { label: "Careers", href: "#" },
+      { label: "About Us", href: "/about" },
+      { label: "How to Use", href: "/how-to-use" },
+      { label: "News & Reviews", href: "/blogs" },
     ],
   },
 ];

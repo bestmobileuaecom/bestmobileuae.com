@@ -23,7 +23,7 @@ export default function phoneDetailPage({ phone }) {
         {phone.verdict && <QuickVerdict verdict={phone.verdict} />}
         {/* 3. Price by Store - Where to buy */}
         {phone.storePrices && phone.storePrices.length > 0 && (
-          <PriceByStore storePrices={phone.storePrices} />
+          <PriceByStore storePrices={phone.storePrices} phoneName={phone.name} />
         )}
         {/* 3.5 Price Alert Form */}
         {phone.id && (

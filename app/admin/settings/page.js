@@ -25,11 +25,18 @@ export default async function AdminSettingsPage() {
     .select("*")
     .order("sort_order");
 
+  // Fetch stores
+  const { data: stores } = await supabase
+    .from("stores")
+    .select("*")
+    .order("sort_order");
+
   return (
     <SettingsClient
       user={user}
       initialSettings={settings || []}
       initialBrands={brands || []}
+      initialStores={stores || []}
     />
   );
 }

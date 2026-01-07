@@ -1,4 +1,4 @@
-import { SectionCard, InputField } from "../forms";
+import { SectionCard, InputField, ImageUpload } from "../forms";
 
 /**
  * BasicInfoSection - Required phone fields
@@ -73,11 +73,11 @@ export default function BasicInfoSection({
           </select>
         </div>
         
-        <InputField 
-          label="Image URL" 
+        <ImageUpload 
+          label="Phone Image" 
           value={formData.image_url} 
-          onChange={(v) => updateField("image_url", v)} 
-          placeholder="/mobile1.jpg" 
+          onChange={(v) => updateField("image_url", v)}
+          bucket="phone-images"
         />
       </div>
     </SectionCard>
