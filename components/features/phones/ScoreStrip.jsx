@@ -72,12 +72,10 @@ export default function ScoreStrip({ scores }) {
     return "text-amber-600";
   };
 
-  // Convert 5-point to 10-point scale, cap at 9.5 for realism
+  // Convert rating to 10-point scale; accept 0-5 or 0-10 inputs
   const getScore10 = (rating) => {
-    let score = rating <= 5 ? rating * 2 : rating;
-    // Cap at 9.5 to avoid "too perfect" feeling
-    if (score >= 10) score = 9.5;
-    return score;
+    const score = rating <= 5 ? rating * 2 : rating;
+    return Number(score.toFixed(1));
   };
 
   // Get stars count (1-5) from score

@@ -247,6 +247,36 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
     }
   };
 
+  // Auto-calculate Overall Score from Verdict Score categories (0-10), to 1 decimal
+  useEffect(() => {
+    const toNum = (v) => {
+      const n = Number(v);
+      return isNaN(n) ? null : n;
+    };
+    const categories = [
+      toNum(formData.score_battery),
+      toNum(formData.score_camera),
+      toNum(formData.score_performance),
+      toNum(formData.score_value),
+    ].filter((n) => n !== null);
+
+    if (categories.length === 0) {
+      if (formData.overall_score_rating !== "") updateField("overall_score_rating", "");
+      return;
+    }
+
+    const avg = categories.reduce((a, b) => a + b, 0) / categories.length;
+    const rounded = Number(avg.toFixed(1));
+    if (rounded !== Number(formData.overall_score_rating)) {
+      updateField("overall_score_rating", rounded);
+    }
+  }, [
+    formData.score_battery,
+    formData.score_camera,
+    formData.score_performance,
+    formData.score_value,
+  ]);
+
   // Auto-save
   useEffect(() => {
     if (!hasUnsavedChanges || !formData.name) return;
@@ -285,6 +315,12 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
       score_performance: formData.score_performance ? Math.round(Number(formData.score_performance)) : null,
       score_display: formData.score_display ? Math.round(Number(formData.score_display)) : null,
       score_value: formData.score_value ? Math.round(Number(formData.score_value)) : null,
+      detailed_scores: [
+        { label: "Battery", rating: formData.score_battery ? Number(Number(formData.score_battery).toFixed(1)) : null },
+        { label: "Camera", rating: formData.score_camera ? Number(Number(formData.score_camera).toFixed(1)) : null },
+        { label: "Performance", rating: formData.score_performance ? Number(Number(formData.score_performance).toFixed(1)) : null },
+        { label: "Value", rating: formData.score_value ? Number(Number(formData.score_value).toFixed(1)) : null },
+      ].filter(s => s.rating !== null),
       verdict: formData.verdict,
       final_recommendation: formData.final_recommendation,
       buy_reasons: cleanArray(formData.buy_reasons),
@@ -510,7 +546,7 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
             <TextareaField label="Identity (Description below phone name)" value={formData.identity} onChange={(v) => updateField("identity", v)} placeholder="The Samsung Galaxy A35 5G is a popular mid-range smartphone..." rows={2} />
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <InputField label="Overall Score (0-10)" value={formData.overall_score_rating} onChange={(v) => updateField("overall_score_rating", v)} placeholder="8.1" type="number" hint="e.g., 8.1" />
+              <InputField label="Overall Score (0-10)" value={formData.overall_score_rating} onChange={(v) => updateField("overall_score_rating", v)} placeholder="Auto from Verdict Score" type="number" hint="Auto-calculated average of category scores" disabled={true} />
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Score Label</label>
                 <select value={formData.overall_score_label || ""} onChange={(e) => updateField("overall_score_label", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
@@ -693,24 +729,32 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
           </div>
         </SectionCard>
 
-        {/* 5. Scores */}
-        <SectionCard number="5" title="Our Verdict Scores" subtitle="Rate 0-10, shows as 1-5 stars on frontend">
+        {/* 5. Verdict Score */}
+        <SectionCard number="5" title="Verdict Score" subtitle="Enter 0-10; Overall auto-calculates">
           <div className="pt-4">
-            <div className="grid grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
               {[
-                { key: "score_value", label: "Value 💰" },
-                { key: "score_performance", label: "Daily Use 📱" },
-                { key: "score_camera", label: "Camera 📸" },
-                { key: "score_performance", label: "Gaming 🎮", hint: "(uses performance)" },
-                { key: "score_battery", label: "Battery 🔋" },
+                { key: "score_value", label: "Value\nPrice vs features" },
+                { key: "score_performance", label: "Daily Use\nApps, calls, browsing" },
+                { key: "score_camera", label: "Camera\nDay & night quality" },
+                { key: "score_performance", label: "Gaming\nHeavy games performance" },
+                { key: "score_battery", label: "Battery\nScreen-on time, charging" },
               ].map((s, i) => (
                 <div key={i}>
-                  <label className="block text-xs text-gray-600 mb-1">{s.label}</label>
-                  <input type="number" min="0" max="10" value={formData[s.key] || ""} onChange={(e) => updateField(s.key, e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-center" placeholder="8" />
+                  <label className="block text-xs text-gray-600 mb-1 whitespace-pre-line">{s.label}</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="10"
+                    value={formData[s.key] || ""}
+                    onChange={(e) => updateField(s.key, e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-center"
+                    placeholder="8"
+                  />
                 </div>
               ))}
             </div>
-            <p className="text-xs text-gray-500 mt-2">Score ÷ 2 = stars (e.g., 8 → 4 stars)</p>
+            <p className="text-xs text-gray-500 mt-2">Average(Value, Daily Use, Camera, Battery) → Overall</p>
           </div>
         </SectionCard>
 
