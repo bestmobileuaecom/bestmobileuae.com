@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Plus, Trash2, ArrowLeft, ExternalLink, Save, Loader2, Search, Sparkles } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, ExternalLink, Save, Loader2, Search, Sparkles, GitCompare } from "lucide-react";
 import { 
   AdminLayoutWrapper,
   SectionCard,
@@ -39,6 +39,10 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
   const [allPhones, setAllPhones] = useState([]);
   const [loadingPhones, setLoadingPhones] = useState(true);
 
+  // Comparisons state - which comparisons to show on this phone's detail page
+  const [phoneComparisons, setPhoneComparisons] = useState([]);
+  const [loadingComparisons, setLoadingComparisons] = useState(true);
+
   // Form state
   const [formData, setFormData] = useState({
     // Basic Info
@@ -69,12 +73,7 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
     // Hero section data
     trust_signals: phone?.trust_signals?.length
       ? phone.trust_signals
-      : [
-          { icon: "⚡", label: "" },
-          { icon: "📸", label: "" },
-          { icon: "🔄", label: "" },
-          { icon: "🛡️", label: "" },
-        ],
+      : [{ icon: "⚡", label: "" }],
     storage_options: phone?.storage_options || [],
     color_options: phone?.color_options || [],
     
@@ -93,12 +92,12 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
     phone?.storePrices || [{ store_id: "", store_name: "", price_value: "", url: "" }]
   );
 
-  // Helper to format price as AED X,XXX
+  // Helper to format price as AED X,XXX.XX (2 decimals)
   const formatPrice = (value) => {
     if (!value) return "";
     const num = Number(value);
     if (isNaN(num)) return "";
-    return `AED ${num.toLocaleString()}`;
+    return `AED ${num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
   
   const [specsText, setSpecsText] = useState(
@@ -125,6 +124,43 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
     };
     fetchPhones();
   }, [supabase]);
+
+  // Fetch existing comparisons for this phone (if editing)
+  useEffect(() => {
+    const fetchComparisons = async () => {
+      if (!phone?.id) {
+        setLoadingComparisons(false);
+        return;
+      }
+      
+      const { data, error } = await supabase
+        .from("featured_comparisons")
+        .select(`
+          id,
+          phone1_id,
+          phone2_id,
+          title,
+          show_on_homepage,
+          phone1:phones!phone1_id(id, name, slug, image_url),
+          phone2:phones!phone2_id(id, name, slug, image_url)
+        `)
+        .or(`phone1_id.eq.${phone.id},phone2_id.eq.${phone.id}`)
+        .eq("is_active", true);
+      
+      if (!error && data) {
+        setPhoneComparisons(data.map(c => ({
+          id: c.id,
+          phone1_id: c.phone1_id,
+          phone2_id: c.phone2_id,
+          title: c.title,
+          showOnHomepage: c.show_on_homepage,
+          otherPhone: c.phone1_id === phone.id ? c.phone2 : c.phone1,
+        })));
+      }
+      setLoadingComparisons(false);
+    };
+    fetchComparisons();
+  }, [supabase, phone?.id]);
 
   // Update field helper
   const updateField = useCallback((field, value) => {
@@ -303,6 +339,73 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
     }
   };
 
+  // Remove a comparison from this phone's detail page
+  const removeComparison = async (comparisonId) => {
+    if (!confirm("Remove this comparison from this phone's detail page?")) return;
+    
+    const { error } = await supabase
+      .from("featured_comparisons")
+      .delete()
+      .eq("id", comparisonId);
+    
+    if (error) {
+      alert("Failed to remove comparison: " + error.message);
+    } else {
+      setPhoneComparisons(prev => prev.filter(c => c.id !== comparisonId));
+    }
+  };
+
+  // Add new comparison for this phone
+  const addComparison = async (otherPhoneId) => {
+    if (!phone?.id || !otherPhoneId) return;
+    
+    // Check if comparison already exists
+    const existingComparison = phoneComparisons.find(
+      c => c.otherPhone?.id === otherPhoneId
+    );
+    if (existingComparison) {
+      alert("This comparison already exists!");
+      return;
+    }
+    
+    const { data, error } = await supabase
+      .from("featured_comparisons")
+      .insert({
+        phone1_id: phone.id,
+        phone2_id: otherPhoneId,
+        is_active: true,
+        show_on_homepage: false,
+      })
+      .select(`
+        id,
+        phone1_id,
+        phone2_id,
+        title,
+        show_on_homepage,
+        phone1:phones!phone1_id(id, name, slug, image_url),
+        phone2:phones!phone2_id(id, name, slug, image_url)
+      `)
+      .single();
+    
+    if (error) {
+      // Handle unique constraint violation (comparison might exist in reverse order)
+      if (error.code === "23505") {
+        alert("This comparison already exists (possibly in reverse order).");
+      } else {
+        alert("Failed to add comparison: " + error.message);
+      }
+    } else if (data) {
+      setPhoneComparisons(prev => [...prev, {
+        id: data.id,
+        phone1_id: data.phone1_id,
+        phone2_id: data.phone2_id,
+        title: data.title,
+        showOnHomepage: data.show_on_homepage,
+        otherPhone: data.phone1_id === phone.id ? data.phone2 : data.phone1,
+      }]);
+    }
+  };
+
   // Main save function
   const handleSave = async (status) => {
     // Validation
@@ -328,7 +431,7 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
       category: formData.category,
       image_url: formData.image_url,
       price: lowestPrice,
-      price_range: lowestPrice ? `AED ${lowestPrice.toLocaleString()}` : "",
+      price_range: lowestPrice ? `AED ${lowestPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "",
       
       // Header
       identity: formData.identity,
@@ -342,12 +445,12 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
       buy_reason: formData.buy_reason,
       skip_reason: formData.skip_reason,
       
-      // Verdict Scores (5 metrics)
-      score_design: formData.score_design ? Math.round(Number(formData.score_design)) : null,
-      score_performance: formData.score_performance ? Math.round(Number(formData.score_performance)) : null,
-      score_camera: formData.score_camera ? Math.round(Number(formData.score_camera)) : null,
-      score_connectivity: formData.score_connectivity ? Math.round(Number(formData.score_connectivity)) : null,
-      score_battery: formData.score_battery ? Math.round(Number(formData.score_battery)) : null,
+      // Verdict Scores (5 metrics) - allow decimals like 6.9, 7.5
+      score_design: formData.score_design ? Number(formData.score_design) : null,
+      score_performance: formData.score_performance ? Number(formData.score_performance) : null,
+      score_camera: formData.score_camera ? Number(formData.score_camera) : null,
+      score_connectivity: formData.score_connectivity ? Number(formData.score_connectivity) : null,
+      score_battery: formData.score_battery ? Number(formData.score_battery) : null,
       
       // Hero section data
       trust_signals: formData.trust_signals.filter((s) => s.label),
@@ -572,12 +675,26 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
 
             {/* Trust Signals */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Trust Signals (badges shown in hero)
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Trust Signals (badges shown in hero)
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    updateField("trust_signals", [
+                      ...formData.trust_signals,
+                      { icon: "✨", label: "" }
+                    ]);
+                  }}
+                  className="text-xs px-2 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition-colors flex items-center gap-1"
+                >
+                  <Plus className="w-3 h-3" /> Add Signal
+                </button>
+              </div>
+              <div className="space-y-2">
                 {formData.trust_signals.map((s, i) => (
-                  <div key={i} className="flex gap-1">
+                  <div key={i} className="flex gap-2 items-center">
                     <input
                       type="text"
                       value={s.icon || ""}
@@ -600,9 +717,22 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
                       className="flex-1 px-2 py-2 border border-gray-300 rounded-lg text-sm"
                       placeholder="Fast performance"
                     />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        updateField("trust_signals", formData.trust_signals.filter((_, idx) => idx !== i));
+                      }}
+                      className="p-2 text-red-500 hover:bg-red-50 rounded transition-colors"
+                      title="Remove signal"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 ))}
               </div>
+              {formData.trust_signals.length === 0 && (
+                <p className="text-sm text-gray-500 py-2">No trust signals. Click "Add Signal" to add one.</p>
+              )}
               <p className="text-xs text-gray-500 mt-1">Example: ⚡ Fast performance, 📸 Pro-grade cameras</p>
             </div>
 
@@ -884,8 +1014,88 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
           </div>
         </SectionCard>
 
-        {/* Section 6: Specifications (with GSMArena scrape) */}
-        <SectionCard number="6" title="Specifications" subtitle="Scrape from GSMArena or edit JSON">
+        {/* Section 6: Compare With (control which comparisons show on detail page) */}
+        {isEdit && (
+          <SectionCard number="6" title="Compare With" subtitle="Control comparisons on detail page">
+            <div className="pt-4 space-y-3">
+              {/* Info banner */}
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                <p className="text-sm text-purple-800">
+                  <GitCompare className="w-4 h-4 inline mr-1" />
+                  These comparisons appear in the "Compare" section on this phone's detail page.
+                  Add or remove to control what users see.
+                </p>
+              </div>
+
+              {/* Dropdown to add comparison */}
+              <div className="flex gap-2 items-center">
+                <select
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      addComparison(e.target.value);
+                      e.target.value = "";
+                    }
+                  }}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  disabled={loadingPhones}
+                >
+                  <option value="">
+                    {loadingPhones ? "Loading phones..." : "Add comparison with..."}
+                  </option>
+                  {allPhones
+                    .filter(p => p.id !== phone?.id && !phoneComparisons.some(c => c.otherPhone?.id === p.id))
+                    .map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))
+                  }
+                </select>
+              </div>
+
+              {/* Current comparisons */}
+              {loadingComparisons ? (
+                <div className="flex items-center gap-2 py-4 text-gray-500">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-sm">Loading comparisons...</span>
+                </div>
+              ) : phoneComparisons.length > 0 ? (
+                <div className="space-y-2">
+                  {phoneComparisons.map((comp) => (
+                    <div key={comp.id} className="flex gap-2 items-center bg-purple-50 p-3 rounded-lg">
+                      <GitCompare className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                      <span className="text-sm font-medium text-gray-700 flex-1 truncate">
+                        vs {comp.otherPhone?.name || "Unknown Phone"}
+                      </span>
+                      {comp.showOnHomepage && (
+                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                          Homepage
+                        </span>
+                      )}
+                      <button 
+                        type="button" 
+                        onClick={() => removeComparison(comp.id)} 
+                        className="p-2 text-red-500 hover:bg-red-50 rounded"
+                        title="Remove comparison"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 py-2">
+                  No comparisons yet. Add phones to compare against above.
+                </p>
+              )}
+
+              <p className="text-xs text-gray-500">
+                💡 To feature comparisons on homepage, use the <Link href="/admin/comparisons" className="text-purple-600 hover:underline">Comparisons</Link> page.
+              </p>
+            </div>
+          </SectionCard>
+        )}
+
+        {/* Section 7: Specifications (with GSMArena scrape) */}
+        <SectionCard number="7" title="Specifications" subtitle="Scrape from GSMArena or edit JSON">
           <div className="pt-4 space-y-4">
             {/* GSMArena Scraper */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -936,7 +1146,7 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
         </SectionCard>
 
         {/* Section 7: FAQs (Template-based) */}
-        <SectionCard number="7" title="FAQs" subtitle="Auto-generated + add custom">
+        <SectionCard number="8" title="FAQs" subtitle="Auto-generated + add custom">
           <div className="pt-4 space-y-3">
             {/* Auto-generate button */}
             {formData.faqs.length === 0 && (
@@ -945,7 +1155,7 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
                 onClick={() => {
                   const phoneName = formData.name || "This phone";
                   const lowestPrice = calculateLowestPrice();
-                  const priceStr = lowestPrice ? `AED ${lowestPrice.toLocaleString()}` : "competitive price";
+                  const priceStr = lowestPrice ? `AED ${lowestPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "competitive price";
                   
                   const autoFaqs = [
                     {

@@ -29,7 +29,7 @@ CREATE TABLE phones (
     name VARCHAR(255) NOT NULL,
     brand_id UUID REFERENCES brands(id) ON DELETE SET NULL,
     image_url TEXT DEFAULT '/mobile1.jpg',
-    price INTEGER NOT NULL, -- Price in AED
+    price DECIMAL(10,2) NOT NULL DEFAULT 0, -- Price in AED (supports decimals like 899.95)
     price_range VARCHAR(50), -- Display format like "AED 1,199"
     release_date DATE,
     category VARCHAR(50) CHECK (category IN ('budget', 'mid-range', 'flagship', 'premium')),
@@ -46,12 +46,12 @@ CREATE TABLE phones (
     overall_score_rating DECIMAL(3,1) CHECK (overall_score_rating >= 0 AND overall_score_rating <= 10),
     overall_score_label VARCHAR(50), -- "Excellent", "Very Good", etc.
     
-    -- Category Scores (1-10)
-    score_camera INTEGER CHECK (score_camera >= 0 AND score_camera <= 10),
-    score_battery INTEGER CHECK (score_battery >= 0 AND score_battery <= 10),
-    score_performance INTEGER CHECK (score_performance >= 0 AND score_performance <= 10),
-    score_display INTEGER CHECK (score_display >= 0 AND score_display <= 10),
-    score_value INTEGER CHECK (score_value >= 0 AND score_value <= 10),
+    -- Category Scores (0-10, supports decimals like 6.9)
+    score_camera DECIMAL(3,1) CHECK (score_camera >= 0 AND score_camera <= 10),
+    score_battery DECIMAL(3,1) CHECK (score_battery >= 0 AND score_battery <= 10),
+    score_performance DECIMAL(3,1) CHECK (score_performance >= 0 AND score_performance <= 10),
+    score_display DECIMAL(3,1) CHECK (score_display >= 0 AND score_display <= 10),
+    score_value DECIMAL(3,1) CHECK (score_value >= 0 AND score_value <= 10),
     
     -- Arrays for pros/cons/highlights
     highlights TEXT[],
@@ -118,7 +118,7 @@ CREATE TABLE phone_store_prices (
     phone_id UUID REFERENCES phones(id) ON DELETE CASCADE,
     store_name VARCHAR(100) NOT NULL,
     price VARCHAR(50) NOT NULL, -- "AED 1,179"
-    price_value INTEGER, -- Numeric for sorting
+    price_value DECIMAL(10,2), -- Numeric for sorting (supports decimals like 899.95)
     url TEXT,
     region VARCHAR(50) DEFAULT 'UAE',
     is_active BOOLEAN DEFAULT true,

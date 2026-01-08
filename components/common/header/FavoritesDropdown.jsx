@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Heart, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getLikedPhones, unlikePhone, onFavoritesChange } from "@/lib/favorites";
+import { formatPrice } from "@/lib/utils";
 
 export default function FavoritesDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -210,7 +211,7 @@ export default function FavoritesDropdown() {
                       <p className="text-xs text-muted-foreground">{phone.brand}</p>
                       {phone.price && (
                         <p className="text-sm font-semibold text-primary mt-0.5">
-                          AED {phone.price.toLocaleString()}
+                          AED {formatPrice(phone.price)}
                         </p>
                       )}
                     </div>

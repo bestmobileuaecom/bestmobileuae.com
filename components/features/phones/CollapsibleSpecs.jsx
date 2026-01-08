@@ -21,29 +21,91 @@ export default function CollapsibleSpecs({ specs, defaultOpen = false }) {
     return null;
   };
 
-  const getSpecString = (obj, primaryKey, fallbackKeys = []) => {
+  const getSpecString = (obj, primaryKey, fallbackKeys = [], priorityKeys = []) => {
     const category = getNestedValue(specs, primaryKey);
     if (!category) return null;
     if (typeof category === 'string') return category;
-    // Try to find a meaningful value in the object
+    
+    // Helper to format value (e.g., numeric capacity to "5000mAh")
+    const formatValue = (val, key) => {
+      if (typeof val === 'number') {
+        // Format battery capacity
+        if (key.toLowerCase().includes('capacity')) {
+          return `${val}mAh`;
+        }
+        // Format display size
+        if (key.toLowerCase().includes('size') && val < 20) {
+          return `${val}"`;
+        }
+        return String(val);
+      }
+      return val;
+    };
+    
+    // First check priority keys (these should be shown first if they exist)
+    for (const key of priorityKeys) {
+      const val = category[key] || category[key.toLowerCase()];
+      if (val !== undefined && val !== null) {
+        const formatted = formatValue(val, key);
+        if (typeof formatted === 'string') return formatted;
+      }
+      // Also check for keys containing the priority key name
+      for (const catKey of Object.keys(category)) {
+        if (catKey.toLowerCase().includes(key.toLowerCase())) {
+          const formatted = formatValue(category[catKey], catKey);
+          if (typeof formatted === 'string') return formatted;
+        }
+      }
+    }
+        // Try to find a meaningful value in the object
     const keysToTry = [primaryKey, ...fallbackKeys, 'Size', 'Type', 'Capacity', 'Main', 'Processor'];
     for (const key of keysToTry) {
-      if (typeof category[key] === 'string') return category[key];
-      if (typeof category[key.toLowerCase()] === 'string') return category[key.toLowerCase()];
+      const val = category[key] || category[key.toLowerCase()];
+      if (val !== undefined && val !== null) {
+        const formatted = formatValue(val, key);
+        if (typeof formatted === 'string') return formatted;
+      }
     }
     // Look for keys that contain the fallback key names (e.g., "main_Single" contains "main")
     for (const catKey of Object.keys(category)) {
       for (const fallback of fallbackKeys) {
-        if (catKey.toLowerCase().includes(fallback.toLowerCase()) && typeof category[catKey] === 'string') {
-          return category[catKey];
+        if (catKey.toLowerCase().includes(fallback.toLowerCase())) {
+          const formatted = formatValue(category[catKey], catKey);
+          if (typeof formatted === 'string') return formatted;
         }
       }
     }
     // Return first string value
-    for (const v of Object.values(category)) {
-      if (typeof v === 'string') return v;
+    for (const [k, v] of Object.entries(category)) {
+      const formatted = formatValue(v, k);
+      if (typeof formatted === 'string') return formatted;
     }
     return null;
+  };
+
+  // Special function to get display spec with size + type combined (e.g., "6.7" Super AMOLED")
+  const getDisplaySpec = () => {
+    const display = getNestedValue(specs, 'Display');
+    if (!display) return null;
+    
+    // Find size value (could be "Size (inches)" or "Size")
+    let size = null;
+    for (const key of Object.keys(display)) {
+      if (key.toLowerCase().includes('size')) {
+        const val = display[key];
+        size = typeof val === 'number' ? `${val}"` : val;
+        break;
+      }
+    }
+    
+    // Find type value
+    const type = display.Type || display.type || null;
+    
+    // Combine size and type if both exist
+    if (size && type) {
+      return `${size} ${type}`;
+    }
+    return size || type || null;
   };
 
   // Extract key specs to show by default
@@ -51,25 +113,25 @@ export default function CollapsibleSpecs({ specs, defaultOpen = false }) {
     {
       icon: Monitor,
       label: "Display",
-      value: getSpecString(specs, 'Display', ['Size', 'Type']),
+      value: getDisplaySpec(),
       color: "bg-blue-50 border-blue-100 text-blue-600",
     },
     {
       icon: Cpu,
       label: "Processor",
-      value: getSpecString(specs, 'Performance', ['Processor', 'Chipset']) || getSpecString(specs, 'Processor'),
+      value: getSpecString(specs, 'Performance', ['Processor'], ['Chipset']) || getSpecString(specs, 'Processor'),
       color: "bg-amber-50 border-amber-100 text-amber-600",
     },
     {
       icon: Camera,
       label: "Camera",
-      value: getSpecString(specs, 'Camera', ['Main', 'Primary', 'main_Single', 'main_Quad', 'main_Triple', 'main_Dual']),
+      value: getSpecString(specs, 'Camera', ['Primary', 'main_Single', 'main_Quad', 'main_Triple', 'main_Dual'], ['Main', 'Rear Main']),
       color: "bg-purple-50 border-purple-100 text-purple-600",
     },
     {
       icon: Battery,
       label: "Battery",
-      value: getSpecString(specs, 'Battery', ['Capacity', 'Size', 'Charging']),
+      value: getSpecString(specs, 'Battery', ['Size', 'Charging'], ['Capacity']),
       color: "bg-emerald-50 border-emerald-100 text-emerald-600",
     },
   ].filter((spec) => spec.value);
