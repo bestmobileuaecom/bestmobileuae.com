@@ -13,6 +13,15 @@ export default function ArticleCard({ article }) {
   const badgeColor =
     categoryColors[article.category] || "bg-primary text-white";
 
+  // Format date to human readable
+  const formattedDate = article.date
+    ? new Date(article.date).toLocaleDateString("en-AE", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : "";
+
   return (
     <Link
       href={`/blogs/${article.slug}`}
@@ -44,7 +53,7 @@ export default function ArticleCard({ article }) {
       <div className="p-4">
         {/* Meta */}
         <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2">
-          <span>{article.date}</span>
+          <span>{formattedDate}</span>
           <span className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
             {article.readTime}

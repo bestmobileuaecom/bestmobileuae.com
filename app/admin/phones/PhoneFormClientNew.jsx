@@ -318,6 +318,9 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
     
     const lowestPrice = calculateLowestPrice();
     
+    // Store old price for price drop detection
+    const oldPrice = phone?.price || phone?.last_price || null;
+    
     const phoneData = {
       slug: formData.slug,
       name: formData.name,
@@ -378,6 +381,31 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
       }
 
       await saveStorePrices(savedId);
+
+      // Check for price drop and send notifications
+      if (lowestPrice > 0 && oldPrice && lowestPrice < oldPrice) {
+        try {
+          const notifyResponse = await fetch("/api/price-alert/notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              phoneId: savedId,
+              newPrice: lowestPrice,
+              oldPrice: oldPrice,
+              phoneName: formData.name,
+              phoneSlug: formData.slug,
+              imageUrl: formData.image_url,
+            }),
+          });
+          const notifyResult = await notifyResponse.json();
+          if (notifyResult.notified > 0) {
+            console.log(`✅ Price drop alert sent to ${notifyResult.notified} subscribers`);
+          }
+        } catch (notifyError) {
+          console.error("Price alert notification failed:", notifyError);
+          // Don't block save on notification failure
+        }
+      }
 
       // Only redirect on publish, stay on page for draft
       if (status === "published") {
