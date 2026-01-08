@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useMemo, useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   ArrowRight,
   Battery,
@@ -90,6 +90,7 @@ function generateComparisonVerdict(phones) {
 
 function ComparePage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const phonesParam = searchParams.get("phones");
   
   const [selectedPhones, setSelectedPhones] = useState([]);
@@ -137,15 +138,30 @@ function ComparePage() {
     newPhones[currentSlot] = phone;
     setSelectedPhones(newPhones);
     setSelectorOpen(false);
+    
+    // Update URL with selected phones
+    const slugs = newPhones.map(p => p.slug).join(',');
+    if (slugs) {
+      router.replace(`/compare?phones=${slugs}`, { scroll: false });
+    }
   };
 
   const removePhone = (index) => {
     const newPhones = selectedPhones.filter((_, i) => i !== index);
     setSelectedPhones(newPhones);
+    
+    // Update URL after removing phone
+    const slugs = newPhones.map(p => p.slug).join(',');
+    if (slugs) {
+      router.replace(`/compare?phones=${slugs}`, { scroll: false });
+    } else {
+      router.replace('/compare', { scroll: false });
+    }
   };
 
   const resetComparison = () => {
     setSelectedPhones([]);
+    router.replace('/compare', { scroll: false });
   };
 
   const excludeSlugs = selectedPhones.map((p) => p.slug);
@@ -184,15 +200,41 @@ function ComparePage() {
       const lowerKey = key.toLowerCase();
       const upperKey = key.charAt(0).toUpperCase() + key.slice(1);
       if (specs[key]) {
-        if (typeof specs[key] === "object") {
+        if (typeof specs[key] === "object" && specs[key] !== null) {
           // Return first value from nested object
-          const values = Object.values(specs[key]);
-          return values[0];
+          const values = Object.values(specs[key]).filter(v => v != null);
+          return values[0] || null;
         }
         return specs[key];
       }
-      if (specs[lowerKey]) return typeof specs[lowerKey] === "object" ? Object.values(specs[lowerKey])[0] : specs[lowerKey];
-      if (specs[upperKey]) return typeof specs[upperKey] === "object" ? Object.values(specs[upperKey])[0] : specs[upperKey];
+      if (specs[lowerKey]) return typeof specs[lowerKey] === "object" && specs[lowerKey] !== null ? Object.values(specs[lowerKey]).filter(v => v != null)[0] || null : specs[lowerKey];
+      if (specs[upperKey]) return typeof specs[upperKey] === "object" && specs[upperKey] !== null ? Object.values(specs[upperKey]).filter(v => v != null)[0] || null : specs[upperKey];
+    }
+    return null;
+  };
+
+  // Helper to format charging info from object
+  const formatCharging = (chargingData) => {
+    if (!chargingData) return null;
+    if (typeof chargingData === 'string') return chargingData;
+    if (typeof chargingData === 'object') {
+      const parts = [];
+      if (chargingData.Wired) parts.push(chargingData.Wired);
+      if (chargingData.Wireless) parts.push(`${chargingData.Wireless} (Wireless)`);
+      if (chargingData.Reverse_Wired) parts.push(`${chargingData.Reverse_Wired} (Reverse)`);
+      return parts.join(', ') || Object.values(chargingData).filter(v => v)[0] || null;
+    }
+    return null;
+  };
+
+  // Helper to format camera info from object
+  const formatCamera = (cameraData) => {
+    if (!cameraData) return null;
+    if (typeof cameraData === 'string') return cameraData;
+    if (typeof cameraData === 'object') {
+      // If it has numeric keys or an array-like structure, join with " + "
+      const values = Object.values(cameraData).filter(v => v && typeof v === 'string');
+      return values.join(' + ') || null;
     }
     return null;
   };
@@ -409,13 +451,13 @@ function ComparePage() {
             >
               <CompareRow
                 label="Main Camera"
-                values={getValues((p) => p.specs?.Camera?.Main || p.specs?.camera?.Main || p.specs?.camera?.main)}
+                values={getValues((p) => formatCamera(p.specs?.Camera?.Main || p.specs?.camera?.Main || p.specs?.camera?.main))}
                 phones={selectedPhones}
                 type="text"
               />
               <CompareRow
                 label="Front Camera"
-                values={getValues((p) => p.specs?.Camera?.Front || p.specs?.camera?.Front || p.specs?.camera?.front)}
+                values={getValues((p) => formatCamera(p.specs?.Camera?.Front || p.specs?.camera?.Front || p.specs?.camera?.front))}
                 phones={selectedPhones}
                 type="text"
               />
@@ -442,7 +484,7 @@ function ComparePage() {
               />
               <CompareRow
                 label="Charging"
-                values={getValues((p) => p.specs?.Battery?.Charging || p.specs?.battery?.Charging || p.specs?.battery?.charging)}
+                values={getValues((p) => formatCharging(p.specs?.Battery?.Charging || p.specs?.battery?.Charging || p.specs?.battery?.charging))}
                 phones={selectedPhones}
                 type="text"
               />
@@ -500,7 +542,11 @@ function ComparePage() {
                       key={phone.id}
                       onClick={() => {
                         if (selectedPhones.length < 4 && !selectedPhones.find(p => p.slug === phone.slug)) {
-                          setSelectedPhones([...selectedPhones, phone]);
+                          const newPhones = [...selectedPhones, phone];
+                          setSelectedPhones(newPhones);
+                          // Update URL with selected phones
+                          const slugs = newPhones.map(p => p.slug).join(',');
+                          router.replace(`/compare?phones=${slugs}`, { scroll: false });
                         }
                       }}
                       disabled={selectedPhones.find(p => p.slug === phone.slug)}
