@@ -13,6 +13,7 @@ import {
   Menu,
   Eye,
   Bell,
+  GitCompare,
 } from "lucide-react";
 
 export default function AdminSidebar({ user, sidebarOpen, setSidebarOpen }) {
@@ -41,6 +42,11 @@ export default function AdminSidebar({ user, sidebarOpen, setSidebarOpen }) {
       name: "Articles",
       href: "/admin/articles",
       icon: FileText,
+    },
+    {
+      name: "Comparisons",
+      href: "/admin/comparisons",
+      icon: GitCompare,
     },
     {
       name: "Price Alerts",

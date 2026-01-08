@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Breadcrumb from "@/components/common/Breadcrumb";
 import PhoneDetailPage from "@/components/features/phones/PhoneDetailPage";
 import { getPhoneBySlug } from "@/lib/data/phones";
+import { getPhoneComparisons } from "@/lib/data/comparisons";
 import PublicLayout from "@/components/common/PublicLayout";
 
 export async function generateMetadata({ params }) {
@@ -49,10 +50,18 @@ export default async function PhoneDetail({ params, searchParams }) {
     notFound();
   }
 
+  // Fetch comparisons for this phone
+  let comparisons = [];
+  try {
+    comparisons = await getPhoneComparisons(phone.id);
+  } catch (e) {
+    console.log("Error fetching comparisons:", e);
+  }
+
   return (
     <PublicLayout>
       <Breadcrumb phone={phone} />
-      <PhoneDetailPage phone={phone} />
+      <PhoneDetailPage phone={phone} comparisons={comparisons} />
     </PublicLayout>
   );
 }

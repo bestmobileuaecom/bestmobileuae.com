@@ -6,6 +6,7 @@ import BuyingGuides from "@/components/features/home/BuyingGuides";
 import TrustTransparency from "@/components/features/home/TrustTransparency";
 import { getPublishedPhones } from "@/lib/data/phones";
 import { getPublishedArticles } from "@/lib/data/articles";
+import { getHomepageComparisons } from "@/lib/data/comparisons";
 import PublicLayout from "@/components/common/PublicLayout";
 
 export default async function Home() {
@@ -55,10 +56,18 @@ export default async function Home() {
     console.log("Error fetching articles:", e);
   }
 
-  // Generate popular comparisons from phones data
-  const popularComparisons = [];
-  if (popularPhones.length >= 2) {
-    // Create up to 3 comparisons from available phones
+  // Fetch featured comparisons from database (admin-controlled)
+  let featuredComparisons = [];
+  try {
+    featuredComparisons = await getHomepageComparisons();
+  } catch (e) {
+    console.log("Error fetching comparisons:", e);
+  }
+
+  // Fallback: Generate comparisons from phones if no admin-curated ones
+  let popularComparisons = featuredComparisons;
+  if (featuredComparisons.length === 0 && popularPhones.length >= 2) {
+    // Auto-generate up to 3 comparisons from popular phones
     for (let i = 0; i < Math.min(3, Math.floor(popularPhones.length / 2)); i++) {
       const phone1 = popularPhones[i * 2];
       const phone2 = popularPhones[i * 2 + 1];

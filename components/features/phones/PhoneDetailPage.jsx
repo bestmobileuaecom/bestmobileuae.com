@@ -4,6 +4,7 @@ import PriceByStore from "./PriceByStore";
 import PriceAlertForm from "./PriceAlertForm";
 import VerdictScores from "./VerdictScores";
 import BestAlternatives from "./BestAlternatives";
+import CompareWith from "./CompareWith";
 import CollapsibleSpecs from "./CollapsibleSpecs";
 import CollapsibleFAQ from "./CollapsibleFAQ";
 
@@ -16,11 +17,12 @@ import CollapsibleFAQ from "./CollapsibleFAQ";
  * 3. Where to Buy (affiliate)
  * 4. Price Alert
  * 5. Verdict Scores (5 metrics)
- * 6. Similar Phones (auto-linked)
- * 7. Specifications (collapsed)
- * 8. FAQs (template)
+ * 6. Compare With (curated comparisons)
+ * 7. Similar Phones (auto-linked)
+ * 8. Specifications (collapsed)
+ * 9. FAQs (template)
  */
-export default function phoneDetailPage({ phone }) {
+export default function phoneDetailPage({ phone, comparisons = [] }) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50/50">
       <div className="max-w-7xl mx-auto px-4">
@@ -49,15 +51,20 @@ export default function phoneDetailPage({ phone }) {
           <VerdictScores scores={phone.scores} />
         )}
 
-        {/* 6. Similar Phones - Options */}
+        {/* 6. Compare With - Curated comparisons */}
+        {comparisons && comparisons.length > 0 && (
+          <CompareWith comparisons={comparisons} currentPhone={phone} />
+        )}
+
+        {/* 7. Similar Phones - Options */}
         {phone.alternatives && phone.alternatives.length > 0 && (
           <BestAlternatives alternatives={phone.alternatives} />
         )}
 
-        {/* 7. Specifications - Collapsed by default (SEO) */}
+        {/* 8. Specifications - Collapsed by default (SEO) */}
         {phone.specs && <CollapsibleSpecs specs={phone.specs} defaultOpen={false} />}
 
-        {/* 8. FAQs - Template based (SEO) */}
+        {/* 9. FAQs - Template based (SEO) */}
         {phone.faqs && phone.faqs.length > 0 && (
           <CollapsibleFAQ faqs={phone.faqs} />
         )}
