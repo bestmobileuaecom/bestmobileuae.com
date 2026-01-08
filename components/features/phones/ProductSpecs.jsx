@@ -12,13 +12,7 @@ export function TrustSignals({ signals }) {
       {signals.slice(0, 4).map((s, i) => (
         <span
           key={i}
-          className={`inline-flex items-center gap-1 md:gap-1.5 text-[10px] md:text-xs font-medium px-2 md:px-3 py-1 md:py-1.5 rounded-full border whitespace-nowrap flex-shrink-0 transition-colors ${
-            i === 0
-              ? "bg-primary/10 text-primary border-primary/20"
-              : i === 1
-              ? "bg-accent/10 text-accent border-accent/20"
-              : "bg-secondary text-secondary-foreground border-border"
-          }`}
+          className="inline-flex items-center gap-1 md:gap-1.5 text-[10px] md:text-xs font-medium px-2 md:px-3 py-1 md:py-1.5 rounded-full border whitespace-nowrap flex-shrink-0 bg-secondary text-secondary-foreground border-border"
         >
           <span>{s.icon}</span>
           <span>{s.label}</span>
