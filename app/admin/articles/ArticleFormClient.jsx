@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AdminLayoutWrapper } from "@/components/admin";
+import { ImageUpload } from "@/components/admin/forms";
 import { createClient } from "@/lib/supabase/client";
 import {
   Save,
@@ -11,6 +12,7 @@ import {
   ArrowLeft,
   ExternalLink,
   Loader2,
+  EyeOff,
 } from "lucide-react";
 
 // Generate slug from title
@@ -50,8 +52,39 @@ export default function ArticleFormClient({ user, phones, article }) {
 
   const [loading, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
+  const [showPreview, setShowPreview] = useState(true);
 
   const categories = ["Review", "News", "Guide", "Comparison"];
+
+  // Simple markdown to HTML converter for preview
+  const renderMarkdown = (text) => {
+    if (!text) return "";
+    return text
+      // Headers
+      .replace(/^### (.*$)/gm, '<h3 class="text-lg font-bold mt-4 mb-2">$1</h3>')
+      .replace(/^## (.*$)/gm, '<h2 class="text-xl font-bold mt-6 mb-3">$1</h2>')
+      .replace(/^# (.*$)/gm, '<h1 class="text-2xl font-bold mt-6 mb-4">$1</h1>')
+      // Bold and italic
+      .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      // Links
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-emerald-600 underline">$1</a>')
+      // Lists
+      .replace(/^- (.*$)/gm, '<li class="ml-4">• $1</li>')
+      .replace(/^\d+\. (.*$)/gm, '<li class="ml-4 list-decimal">$1</li>')
+      // Tables (basic support)
+      .replace(/\|(.+)\|/g, (match) => {
+        const cells = match.split('|').filter(c => c.trim());
+        if (cells.every(c => c.trim().match(/^-+$/))) return '';
+        return '<tr>' + cells.map(c => `<td class="border px-2 py-1">${c.trim()}</td>`).join('') + '</tr>';
+      })
+      // Horizontal rule
+      .replace(/^---$/gm, '<hr class="my-4 border-gray-300">')
+      // Paragraphs
+      .replace(/\n\n/g, '</p><p class="mb-3">')
+      .replace(/\n/g, '<br>');
+  };
 
   // Update form field
   const updateField = (field, value) => {
@@ -166,10 +199,11 @@ export default function ArticleFormClient({ user, phones, article }) {
       </div>
 
       {/* Form Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
+      <div className="space-y-6">
+        {/* Top Row: Basic Info + Sidebar */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Basic Info */}
+          <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-6 space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Title *
@@ -218,154 +252,146 @@ export default function ArticleFormClient({ user, phones, article }) {
                 placeholder="A brief summary of the article..."
               />
             </div>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Content (Markdown/HTML)
-              </label>
-              <textarea
-                value={formData.content || ""}
-                onChange={(e) => updateField("content", e.target.value)}
-                rows={20}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none font-mono text-sm"
-                placeholder="Write your article content here..."
-              />
+          {/* Sidebar - Article Details, Image, SEO */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Meta Info */}
+            <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
+              <h3 className="font-semibold text-gray-900">Article Details</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => updateField("category", e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Read Time</label>
+                  <input
+                    type="text"
+                    value={formData.read_time || ""}
+                    onChange={(e) => updateField("read_time", e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    placeholder="8 min"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Author</label>
+                  <input
+                    type="text"
+                    value={formData.author || ""}
+                    onChange={(e) => updateField("author", e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    placeholder="Tech Team"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Related Phone</label>
+                  <select
+                    value={formData.phone_id || ""}
+                    onChange={(e) => {
+                      updateField("phone_id", e.target.value);
+                      const phone = phones.find((p) => p.id === e.target.value);
+                      if (phone) updateField("phone_name", phone.name);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  >
+                    <option value="">None</option>
+                    {phones.map((phone) => (
+                      <option key={phone.id} value={phone.id}>{phone.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Featured Image + SEO in row */}
+            <div className="grid grid-cols-2 gap-6">
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h3 className="font-semibold text-gray-900 mb-4">Featured Image</h3>
+                <ImageUpload
+                  value={formData.image_url}
+                  onChange={(url) => updateField("image_url", url)}
+                  bucket="phone-images"
+                  folder="articles"
+                  label="Featured Image"
+                />
+              </div>
+              <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
+                <h3 className="font-semibold text-gray-900">SEO</h3>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Meta Title</label>
+                  <input
+                    type="text"
+                    value={formData.meta_title || ""}
+                    onChange={(e) => updateField("meta_title", e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    placeholder="Leave empty to use article title"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Meta Description</label>
+                  <textarea
+                    value={formData.meta_description || ""}
+                    onChange={(e) => updateField("meta_description", e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    placeholder="Leave empty to use excerpt"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Meta Info */}
-          <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
-            <h3 className="font-semibold text-gray-900">Article Details</h3>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Category
-              </label>
-              <select
-                value={formData.category}
-                onChange={(e) => updateField("category", e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-              >
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Read Time
-              </label>
-              <input
-                type="text"
-                value={formData.read_time || ""}
-                onChange={(e) => updateField("read_time", e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                placeholder="8 min"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Author
-              </label>
-              <input
-                type="text"
-                value={formData.author || ""}
-                onChange={(e) => updateField("author", e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                placeholder="Tech Team"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Related Phone
-              </label>
-              <select
-                value={formData.phone_id || ""}
-                onChange={(e) => {
-                  updateField("phone_id", e.target.value);
-                  const phone = phones.find((p) => p.id === e.target.value);
-                  if (phone) {
-                    updateField("phone_name", phone.name);
-                  }
-                }}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-              >
-                <option value="">None</option>
-                {phones.map((phone) => (
-                  <option key={phone.id} value={phone.id}>
-                    {phone.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+        {/* Full Width Content Editor */}
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
+            <label className="block text-lg font-semibold text-gray-900">
+              Content (Markdown/HTML)
+            </label>
+            <button
+              type="button"
+              onClick={() => setShowPreview(!showPreview)}
+              className="flex items-center gap-1 text-sm text-emerald-600 hover:text-emerald-700"
+            >
+              {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showPreview ? "Hide Preview" : "Show Preview"}
+            </button>
           </div>
-
-          {/* Featured Image */}
-          <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
-            <h3 className="font-semibold text-gray-900">Featured Image</h3>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Image URL
-              </label>
-              <input
-                type="text"
-                value={formData.image_url || ""}
-                onChange={(e) => updateField("image_url", e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                placeholder="/mobile1.jpg"
-              />
-            </div>
-
-            {formData.image_url && (
-              <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
-                <img
-                  src={formData.image_url}
-                  alt="Preview"
-                  className="w-full h-full object-cover"
+          
+          <div className={`grid gap-6 ${showPreview ? "grid-cols-2" : "grid-cols-1"}`}>
+            {/* Editor */}
+            <textarea
+              value={formData.content || ""}
+              onChange={(e) => updateField("content", e.target.value)}
+              rows={30}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none font-mono text-sm"
+              placeholder="Write your article content here using Markdown..."
+            />
+            
+            {/* Live Preview */}
+            {showPreview && (
+              <div className="border border-gray-200 rounded-lg p-6 bg-gray-50 overflow-auto max-h-[800px]">
+                <div className="text-xs text-gray-500 mb-3 uppercase tracking-wide font-medium">Preview</div>
+                <div 
+                  className="prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: `<p class="mb-3">${renderMarkdown(formData.content)}</p>` }}
                 />
               </div>
             )}
           </div>
-
-          {/* SEO */}
-          <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
-            <h3 className="font-semibold text-gray-900">SEO</h3>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Meta Title
-              </label>
-              <input
-                type="text"
-                value={formData.meta_title || ""}
-                onChange={(e) => updateField("meta_title", e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                placeholder="Leave empty to use article title"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Meta Description
-              </label>
-              <textarea
-                value={formData.meta_description || ""}
-                onChange={(e) => updateField("meta_description", e.target.value)}
-                rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                placeholder="Leave empty to use excerpt"
-              />
-            </div>
-          </div>
+          
+          <p className="text-xs text-gray-500 mt-3">
+            Supports Markdown: **bold**, *italic*, ## headings, - lists, [links](url), | tables |
+          </p>
         </div>
       </div>
     </AdminLayoutWrapper>

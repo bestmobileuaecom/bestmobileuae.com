@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import PhoneFormClient from "../PhoneFormClient";
+import PhoneFormClient from "../PhoneFormClientNew";
 
 export default async function NewPhonePage() {
   const supabase = await createClient();

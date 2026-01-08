@@ -2,13 +2,15 @@
  * Collapsible Specs - Key specs visible, full specs expandable
  * Shows 4 important specs cards by default
  * Full specs table hidden until user clicks expand
+ * 
+ * Note: Specs are primarily for SEO, not primary reading content
  */
 "use client";
 import { useState } from "react";
 import { ChevronDown, Cpu, Monitor, Battery, Camera } from "lucide-react";
 
-export default function CollapsibleSpecs({ specs }) {
-  const [isExpanded, setIsExpanded] = useState(false);
+export default function CollapsibleSpecs({ specs, defaultOpen = false }) {
+  const [isExpanded, setIsExpanded] = useState(defaultOpen);
 
   // Helper to safely get nested value (handles both cases like Display or display)
   const getNestedValue = (obj, ...keys) => {
@@ -24,9 +26,18 @@ export default function CollapsibleSpecs({ specs }) {
     if (!category) return null;
     if (typeof category === 'string') return category;
     // Try to find a meaningful value in the object
-    for (const key of [primaryKey, ...fallbackKeys, 'Size', 'Type', 'Capacity', 'Main', 'Processor']) {
+    const keysToTry = [primaryKey, ...fallbackKeys, 'Size', 'Type', 'Capacity', 'Main', 'Processor'];
+    for (const key of keysToTry) {
       if (typeof category[key] === 'string') return category[key];
       if (typeof category[key.toLowerCase()] === 'string') return category[key.toLowerCase()];
+    }
+    // Look for keys that contain the fallback key names (e.g., "main_Single" contains "main")
+    for (const catKey of Object.keys(category)) {
+      for (const fallback of fallbackKeys) {
+        if (catKey.toLowerCase().includes(fallback.toLowerCase()) && typeof category[catKey] === 'string') {
+          return category[catKey];
+        }
+      }
     }
     // Return first string value
     for (const v of Object.values(category)) {
@@ -50,16 +61,16 @@ export default function CollapsibleSpecs({ specs }) {
       color: "bg-amber-50 border-amber-100 text-amber-600",
     },
     {
-      icon: Battery,
-      label: "Battery",
-      value: getSpecString(specs, 'Battery', ['Capacity', 'Size']),
-      color: "bg-emerald-50 border-emerald-100 text-emerald-600",
-    },
-    {
       icon: Camera,
       label: "Camera",
-      value: getSpecString(specs, 'Camera', ['Main', 'Primary']),
+      value: getSpecString(specs, 'Camera', ['Main', 'Primary', 'main_Single', 'main_Quad', 'main_Triple', 'main_Dual']),
       color: "bg-purple-50 border-purple-100 text-purple-600",
+    },
+    {
+      icon: Battery,
+      label: "Battery",
+      value: getSpecString(specs, 'Battery', ['Capacity', 'Size', 'Charging']),
+      color: "bg-emerald-50 border-emerald-100 text-emerald-600",
     },
   ].filter((spec) => spec.value);
 

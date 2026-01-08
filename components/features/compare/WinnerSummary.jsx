@@ -1,18 +1,18 @@
 "use client";
 
 import Image from "next/image";
-import { Battery, Camera, Cpu, Star, Target, Trophy, Sparkles } from "lucide-react";
-import { Check } from "lucide-react";
+import { Battery, Camera, Cpu, Smartphone, Wifi, Trophy, Sparkles } from "lucide-react";
 
 export default function WinnerSummary({ phones, verdict }) {
   if (!verdict || !verdict.overall) return null;
 
   const winnerPhone = phones.find((p) => p.slug === verdict.overall.winnerSlug);
   const categoryWins = [
-    { key: "camera", label: "Camera", shortLabel: "Cam", icon: Camera },
-    { key: "battery", label: "Battery", shortLabel: "Bat", icon: Battery },
+    { key: "design", label: "Design", shortLabel: "Design", icon: Smartphone },
     { key: "performance", label: "Performance", shortLabel: "Perf", icon: Cpu },
-    { key: "value", label: "Value", shortLabel: "Val", icon: Star },
+    { key: "camera", label: "Camera", shortLabel: "Cam", icon: Camera },
+    { key: "connectivity", label: "Connectivity", shortLabel: "Conn", icon: Wifi },
+    { key: "battery", label: "Battery", shortLabel: "Bat", icon: Battery },
   ];
 
   return (
@@ -89,65 +89,6 @@ export default function WinnerSummary({ phones, verdict }) {
             </div>
           );
         })}
-      </div>
-
-      {/* Quick Decision Helper */}
-      <div className="space-y-3">
-        <h4 className="font-semibold text-foreground flex items-center gap-2 text-sm sm:text-base">
-          <Target className="w-4 h-4 text-primary" />
-          Quick Decision Helper
-        </h4>
-        <div className="grid grid-cols-1 gap-3">
-          {phones.slice(0, 2).map((phone) => {
-            // Get reasons to choose this phone
-            const reasons = [];
-            
-            // Add pros if available
-            if (phone.pros && phone.pros.length > 0) {
-              reasons.push(...phone.pros.slice(0, 3));
-            }
-            
-            // Add bestFor if available
-            if (phone.bestFor && phone.bestFor.length > 0) {
-              for (const reason of phone.bestFor.slice(0, 3 - reasons.length)) {
-                reasons.push(reason.replace(/-/g, " "));
-              }
-            }
-            
-            // Fallback to generated reasons based on scores
-            if (reasons.length === 0) {
-              if (phone.scores?.camera >= 8) reasons.push("Excellent camera quality");
-              if (phone.scores?.battery >= 8) reasons.push("Long-lasting battery life");
-              if (phone.scores?.performance >= 8) reasons.push("Top-tier performance");
-              if (phone.scores?.value >= 8) reasons.push("Great value for money");
-              if (phone.scores?.display >= 8) reasons.push("Stunning display");
-            }
-            
-            // If still no reasons, add generic ones
-            if (reasons.length === 0) {
-              reasons.push("Solid all-round performance");
-            }
-            
-            return (
-              <div
-                key={phone.id}
-                className="bg-muted/30 hover:bg-muted/40 rounded-lg p-3 sm:p-4 border border-border/50 transition-colors"
-              >
-                <p className="font-semibold text-foreground mb-2 text-sm sm:text-base">
-                  Choose <span className="text-primary">{phone.name}</span> if you want:
-                </p>
-                <ul className="space-y-1 sm:space-y-1.5">
-                  {reasons.slice(0, 3).map((reason, idx) => (
-                    <li key={idx} className="flex items-center gap-2 text-xs sm:text-sm">
-                      <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0" />
-                      <span className="text-muted-foreground">{reason}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
-        </div>
       </div>
     </div>
   );

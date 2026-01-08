@@ -72,12 +72,14 @@ export async function POST(request) {
       );
     }
 
-    // Fetch the page
+    // Fetch the page with browser-like headers (Referer is required to avoid blocking)
     const response = await fetch(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.5",
+        "Referer": "https://www.google.com/",
+        "Accept-Encoding": "gzip, deflate, br",
       },
     });
 
@@ -89,6 +91,14 @@ export async function POST(request) {
     }
 
     const html = await response.text();
+    
+    // Check if we got actual content
+    if (html.length < 1000) {
+      return NextResponse.json(
+        { error: "GSMArena blocked the request. Try again later." },
+        { status: 500 }
+      );
+    }
     
     // Parse specs from HTML
     const specs = parseGSMArenaSpecs(html);
@@ -115,71 +125,60 @@ function parseGSMArenaSpecs(html) {
   };
 
   try {
-    // Find all spec tables
-    // GSMArena uses <table> with class "specs-brief" or within specs-list
+    // GSMArena uses <th> for category headers and <td class="ttl/nfo"> for spec rows
+    // Pattern: <th>Category</th> followed by rows with <td class="ttl"> and <td class="nfo">
     
-    // Extract spec rows using regex patterns
-    // Pattern for spec category headers: <th>Category</th>
-    // Pattern for spec rows: <td class="ttl"><a>Label</a></td><td class="nfo">Value</td>
+    // Find the specs table
+    const specsTableMatch = html.match(/<table[^>]*id="specs-list"[^>]*>[\s\S]*?<\/table>/i) ||
+                            html.match(/<div[^>]*id="specs-list"[^>]*>[\s\S]*?<\/div>/i);
     
-    // Display specs
-    const displayMatch = html.match(/<h2>Display<\/h2>[\s\S]*?<table[\s\S]*?<\/table>/i);
-    if (displayMatch) {
-      parseSpecTable(displayMatch[0], specs.Display);
+    if (!specsTableMatch) {
+      console.log("No specs-list found, trying alternative parsing");
+      return parseAlternativeFormat(html, specs) || specs;
     }
     
-    // Platform/Performance specs
-    const platformMatch = html.match(/<h2>Platform<\/h2>[\s\S]*?<table[\s\S]*?<\/table>/i);
-    if (platformMatch) {
-      parseSpecTable(platformMatch[0], specs.Performance);
-    }
+    const specsHtml = specsTableMatch[0];
     
-    // Memory specs (add to Performance)
-    const memoryMatch = html.match(/<h2>Memory<\/h2>[\s\S]*?<table[\s\S]*?<\/table>/i);
-    if (memoryMatch) {
-      parseSpecTable(memoryMatch[0], specs.Performance);
-    }
+    // Extract all rows with their category context
+    // Look for pattern: <th...>Category</th> ... <td class="ttl">Label</td><td class="nfo">Value</td>
     
-    // Main Camera specs
-    const mainCameraMatch = html.match(/<h2>Main Camera<\/h2>[\s\S]*?<table[\s\S]*?<\/table>/i);
-    if (mainCameraMatch) {
-      parseSpecTable(mainCameraMatch[0], specs.Camera, "main");
-    }
+    // Parse by finding each category section
+    const categories = {
+      'Display': specs.Display,
+      'Platform': specs.Performance,
+      'Memory': specs.Performance,
+      'Main Camera': specs.Camera,
+      'Selfie camera': specs.Camera,
+      'Battery': specs.Battery,
+      'Body': specs.Build,
+      'Network': specs.Network,
+      'Launch': specs.Software,
+      'Misc': specs.Software,
+    };
     
-    // Selfie Camera specs  
-    const selfieCameraMatch = html.match(/<h2>Selfie camera<\/h2>[\s\S]*?<table[\s\S]*?<\/table>/i);
-    if (selfieCameraMatch) {
-      parseSpecTable(selfieCameraMatch[0], specs.Camera, "front");
-    }
-    
-    // Battery specs
-    const batteryMatch = html.match(/<h2>Battery<\/h2>[\s\S]*?<table[\s\S]*?<\/table>/i);
-    if (batteryMatch) {
-      parseSpecTable(batteryMatch[0], specs.Battery);
-    }
-    
-    // Body/Build specs
-    const bodyMatch = html.match(/<h2>Body<\/h2>[\s\S]*?<table[\s\S]*?<\/table>/i);
-    if (bodyMatch) {
-      parseSpecTable(bodyMatch[0], specs.Build);
-    }
-    
-    // Network specs
-    const networkMatch = html.match(/<h2>Network<\/h2>[\s\S]*?<table[\s\S]*?<\/table>/i);
-    if (networkMatch) {
-      parseSpecTable(networkMatch[0], specs.Network);
-    }
-    
-    // Misc/Software specs
-    const miscMatch = html.match(/<h2>Misc<\/h2>[\s\S]*?<table[\s\S]*?<\/table>/i);
-    if (miscMatch) {
-      parseSpecTable(miscMatch[0], specs.Software);
-    }
-
-    // Alternative parsing if h2 method didn't work
-    // Try to find specs-list div
-    if (Object.values(specs).every(cat => Object.keys(cat).length === 0)) {
-      parseAlternativeFormat(html, specs);
+    for (const [catName, targetObj] of Object.entries(categories)) {
+      // Find section starting with <th>Category</th>
+      const catPattern = new RegExp(`<th[^>]*>\\s*${catName}\\s*<\\/th>([\\s\\S]*?)(?=<th[^>]*scope|$)`, 'i');
+      const catMatch = specsHtml.match(catPattern);
+      
+      if (catMatch) {
+        const sectionHtml = catMatch[1];
+        // Extract all ttl/nfo pairs
+        const rowPattern = /<td[^>]*class="[^"]*ttl[^"]*"[^>]*>([\s\S]*?)<\/td>[\s\S]*?<td[^>]*class="[^"]*nfo[^"]*"[^>]*>([\s\S]*?)<\/td>/gi;
+        
+        let rowMatch;
+        while ((rowMatch = rowPattern.exec(sectionHtml)) !== null) {
+          const label = cleanText(rowMatch[1]);
+          const value = cleanText(rowMatch[2]);
+          
+          if (label && value) {
+            const mappedLabel = mapSpecLabel(label, catName);
+            if (mappedLabel) {
+              targetObj[mappedLabel] = value;
+            }
+          }
+        }
+      }
     }
 
     // Clean up and format the specs
@@ -190,38 +189,53 @@ function parseGSMArenaSpecs(html) {
   }
 }
 
-function parseSpecTable(tableHtml, targetObj, prefix = "") {
-  // Extract rows: <td class="ttl">...</td><td class="nfo">...</td>
-  const rowPattern = /<tr[^>]*>[\s\S]*?<td[^>]*class="[^"]*ttl[^"]*"[^>]*>([\s\S]*?)<\/td>[\s\S]*?<td[^>]*class="[^"]*nfo[^"]*"[^>]*>([\s\S]*?)<\/td>[\s\S]*?<\/tr>/gi;
+// Map spec labels based on category
+function mapSpecLabel(label, category) {
+  const cleanLabel = label.replace(/<[^>]*>/g, "").trim();
   
-  let match;
-  while ((match = rowPattern.exec(tableHtml)) !== null) {
-    let label = cleanText(match[1]);
-    let value = cleanText(match[2]);
-    
-    if (label && value) {
-      // Apply prefix for camera specs
-      if (prefix === "main" && (label.includes("Single") || label.includes("Dual") || label.includes("Triple") || label.includes("Quad"))) {
-        targetObj["Main"] = value;
-      } else if (prefix === "main" && label === "Video") {
-        targetObj["Video"] = value;
-      } else if (prefix === "front" && (label.includes("Single") || label.includes("Dual"))) {
-        targetObj["Front"] = value;
-      } else if (prefix === "main" && label.includes("Wide")) {
-        targetObj["Ultra Wide"] = value;
-      } else {
-        // Map common labels
-        const mappedLabel = mapLabel(label);
-        targetObj[mappedLabel] = value;
-      }
-    }
+  // Camera-specific mappings
+  if (category === 'Main Camera') {
+    if (cleanLabel.match(/Single|Dual|Triple|Quad/i)) return "Main";
+    if (cleanLabel === "Video") return "Video";
+    if (cleanLabel === "Features") return "Features";
+    return null; // Skip other camera fields
   }
+  
+  if (category === 'Selfie camera') {
+    if (cleanLabel.match(/Single|Dual/i)) return "Front";
+    return null;
+  }
+  
+  // General mappings
+  const mappings = {
+    "Chipset": "Processor",
+    "CPU": "CPU",
+    "GPU": "GPU",
+    "Internal": "Storage",
+    "Card slot": "Expandable",
+    "Size": "Size",
+    "Type": "Type",
+    "Resolution": "Resolution",
+    "Protection": "Protection",
+    "Weight": "Weight",
+    "Build": "Material",
+    "Dimensions": "Dimensions",
+    "SIM": "SIM",
+    "Charging": "Charging",
+    "OS": "OS",
+    "5G bands": "5G",
+    "Technology": "Network",
+    "Announced": "Announced",
+    "Status": "Status",
+  };
+  
+  return mappings[cleanLabel] || cleanLabel;
 }
 
 function parseAlternativeFormat(html, specs) {
   // Try parsing from specs-list structure
   const specListMatch = html.match(/<div id="specs-list"[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/i);
-  if (!specListMatch) return;
+  if (!specListMatch) return specs;
   
   const specListHtml = specListMatch[0];
   

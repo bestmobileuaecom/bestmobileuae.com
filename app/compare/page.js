@@ -11,8 +11,10 @@ import {
   Monitor,
   Plus,
   RotateCcw,
-  Star,
   Zap,
+  Smartphone,
+  Wifi,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PhoneSelector from "@/components/features/compare/PhoneSelector";
@@ -27,7 +29,7 @@ import PublicLayout from "@/components/common/PublicLayout";
 function generateComparisonVerdict(phones) {
   if (phones.length < 2) return null;
 
-  const categories = ["camera", "battery", "performance", "display", "value"];
+  const categories = ["design", "performance", "camera", "connectivity", "battery"];
   const verdict = {};
 
   for (const category of categories) {
@@ -412,9 +414,42 @@ function ComparePage() {
             </CompareSection>
 
             <CompareSection
+              title="Design & Build"
+              icon={Monitor}
+              categoryWinner={getCategoryWinner("design")}
+            >
+              <CompareRow
+                label="Dimensions"
+                values={getValues((p) => p.specs?.Build?.Dimensions || p.specs?.build?.Dimensions)}
+                phones={selectedPhones}
+                type="text"
+              />
+              <CompareRow
+                label="Weight"
+                values={getValues((p) => p.specs?.Build?.Weight || p.specs?.build?.Weight)}
+                phones={selectedPhones}
+                type="text"
+              />
+              <CompareRow
+                label="Material"
+                values={getValues((p) => p.specs?.Build?.Material || p.specs?.build?.Material)}
+                phones={selectedPhones}
+                type="text"
+              />
+              <CompareRow
+                label="Design Score"
+                icon={Monitor}
+                values={getValues((p) => p.scores?.design)}
+                phones={selectedPhones}
+                type="score"
+                highlight
+              />
+            </CompareSection>
+
+            <CompareSection
               title="Display"
               icon={Monitor}
-              categoryWinner={getCategoryWinner("display")}
+              categoryWinner={null}
             >
               <CompareRow
                 label="Size"
@@ -433,14 +468,6 @@ function ComparePage() {
                 values={getValues((p) => p.specs?.Display?.["Refresh Rate"] || p.specs?.display?.["Refresh Rate"])}
                 phones={selectedPhones}
                 type="text"
-              />
-              <CompareRow
-                label="Display Score"
-                icon={Monitor}
-                values={getValues((p) => p.scores?.display)}
-                phones={selectedPhones}
-                type="score"
-                highlight
               />
             </CompareSection>
 
@@ -499,14 +526,26 @@ function ComparePage() {
             </CompareSection>
 
             <CompareSection
-              title="Value for Money"
-              icon={Star}
-              categoryWinner={getCategoryWinner("value")}
+              title="Connectivity"
+              icon={Zap}
+              categoryWinner={getCategoryWinner("connectivity")}
             >
               <CompareRow
-                label="Value Score"
-                icon={Star}
-                values={getValues((p) => p.scores?.value)}
+                label="5G Support"
+                values={getValues((p) => p.specs?.Network?.["5G"] || p.specs?.network?.["5G"])}
+                phones={selectedPhones}
+                type="text"
+              />
+              <CompareRow
+                label="Dual SIM"
+                values={getValues((p) => p.specs?.Network?.["Dual SIM"] || p.specs?.network?.["Dual SIM"])}
+                phones={selectedPhones}
+                type="text"
+              />
+              <CompareRow
+                label="Connectivity Score"
+                icon={Zap}
+                values={getValues((p) => p.scores?.connectivity)}
                 phones={selectedPhones}
                 type="score"
                 highlight

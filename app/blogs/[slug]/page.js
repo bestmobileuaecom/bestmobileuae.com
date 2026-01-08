@@ -1,10 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Calendar, Clock, Tag, Newspaper } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Tag, Newspaper, User } from "lucide-react";
 import { getArticleBySlug, getPublishedArticles } from "@/lib/data/articles";
 import { notFound } from "next/navigation";
-import ReactMarkdown from "react-markdown";
 import PublicLayout from "@/components/common/PublicLayout";
+import MarkdownContent from "./MarkdownContent";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
@@ -67,29 +67,43 @@ export default async function ArticlePage({ params, searchParams }) {
         <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
           <Link
             href="/blogs"
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to News & Reviews
           </Link>
 
-          <span className="inline-block bg-primary/10 text-primary text-xs font-medium px-2 py-1 rounded-full mb-3">
-            {article.category}
-          </span>
-
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
-            {article.title}
-          </h1>
-
-          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
-              {formattedDate}
+          <div className="max-w-3xl">
+            <span className="inline-block bg-primary/10 text-primary text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
+              {article.category}
             </span>
-            <span className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
-              {article.readTime}
-            </span>
+
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 leading-tight">
+              {article.title}
+            </h1>
+
+            {article.excerpt && (
+              <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
+                {article.excerpt}
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+              {article.author && (
+                <span className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-full">
+                  <User className="w-4 h-4" />
+                  {article.author}
+                </span>
+              )}
+              <span className="flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                {formattedDate}
+              </span>
+              <span className="flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                {article.readTime}
+              </span>
+            </div>
           </div>
         </div>
       </section>
@@ -110,10 +124,10 @@ export default async function ArticlePage({ params, searchParams }) {
             </div>
 
             {/* Article Body */}
-            <div className="bg-card border border-border/60 rounded-2xl shadow-sm p-6 md:p-8">
-              <div className="prose prose-neutral dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-a:text-primary prose-strong:text-foreground prose-ul:text-muted-foreground prose-ol:text-muted-foreground prose-table:text-sm">
+            <div className="bg-card border border-border/60 rounded-2xl shadow-sm p-6 md:p-10">
+              <article>
                 {article.content ? (
-                  <ReactMarkdown>{article.content}</ReactMarkdown>
+                  <MarkdownContent content={article.content} />
                 ) : (
                   <>
                     <p className="text-lg text-muted-foreground leading-relaxed">
@@ -125,7 +139,7 @@ export default async function ArticlePage({ params, searchParams }) {
                     </p>
                   </>
                 )}
-              </div>
+              </article>
             </div>
           </div>
 
