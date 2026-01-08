@@ -131,14 +131,14 @@ export default function Hero({ trendingPhones = [] }) {
 
                 {/* Headline */}
                 <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight mb-4">
-                  Find Your
+                  Find Your Perfect
                   <br />
-                  <span className="text-primary">Perfect Phone</span>
+                  <span className="text-primary">Phone in UAE</span>
                 </h1>
 
                 {/* Short Subheadline */}
-                <p className="text-base md:text-lg text-muted-foreground mb-6 max-w-md">
-                  Expert reviews, detailed comparisons & honest ratings to help you choose the right phone.
+                <p className="text-base md:text-md text-muted-foreground mb-6 max-w-lg">
+                   Expert phone reviews, detailed comparisons, and honest ratings to help you choose the best smartphone for your budget in the UAE.
                 </p>
 
                 {/* CTA Buttons */}
@@ -161,8 +161,8 @@ export default function Hero({ trendingPhones = [] }) {
                 {/* Minimal Stats */}
                 <div className="flex items-center gap-3 sm:gap-6 text-xs sm:text-sm text-muted-foreground flex-wrap">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-semibold text-foreground">1,200+</span>
-                    <span>Phones</span>
+                    <span className="font-semibold text-foreground">Budget</span>
+                    <span>Finder</span>
                   </div>
                   <div className="w-1 h-1 rounded-full bg-border hidden sm:block" />
                   <div className="flex items-center gap-1.5">
