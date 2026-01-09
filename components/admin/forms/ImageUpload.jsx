@@ -24,6 +24,23 @@ export default function ImageUpload({
   const fileInputRef = useRef(null);
   const supabase = createClient();
 
+  // Helper function to delete an image from storage
+  const deleteFromStorage = async (imageUrl) => {
+    if (!imageUrl || !imageUrl.includes(bucket)) return;
+    
+    try {
+      const url = new URL(imageUrl);
+      const pathParts = url.pathname.split(`/storage/v1/object/public/${bucket}/`);
+      if (pathParts[1]) {
+        const filePath = decodeURIComponent(pathParts[1]);
+        await supabase.storage.from(bucket).remove([filePath]);
+        console.log("Deleted old image:", filePath);
+      }
+    } catch (err) {
+      console.error("Failed to delete old image:", err);
+    }
+  };
+
   const handleFileSelect = async (file) => {
     if (!file) return;
 
@@ -45,6 +62,11 @@ export default function ImageUpload({
     setUploading(true);
 
     try {
+      // Delete old image if exists (before uploading new one)
+      if (value) {
+        await deleteFromStorage(value);
+      }
+
       // Generate unique filename
       const fileExt = file.name.split(".").pop();
       const timestamp = Date.now();
@@ -96,19 +118,7 @@ export default function ImageUpload({
   };
 
   const handleRemove = async () => {
-    // Optionally delete from storage
-    if (value && value.includes(bucket)) {
-      try {
-        // Extract file path from URL
-        const url = new URL(value);
-        const pathParts = url.pathname.split(`/storage/v1/object/public/${bucket}/`);
-        if (pathParts[1]) {
-          await supabase.storage.from(bucket).remove([pathParts[1]]);
-        }
-      } catch (err) {
-        console.error("Failed to delete image:", err);
-      }
-    }
+    await deleteFromStorage(value);
     onChange("");
   };
 

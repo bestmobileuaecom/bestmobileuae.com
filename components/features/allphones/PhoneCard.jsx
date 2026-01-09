@@ -74,16 +74,8 @@ export default function PhoneCard({ phone, onCompare, isInCompare, rank }) {
           {phone.name}
         </h3>
 
-        <p className="text-sm text-muted-foreground leading-relaxed mb-2 line-clamp-2">
+        <p className="text-sm text-muted-foreground leading-relaxed mb-3 line-clamp-2">
           {phone.whyPick}
-        </p>
-
-        <p className="text-xs text-primary font-medium mb-3">
-          Good for:{" "}
-          {phone.bestFor
-            ?.slice(0, 2)
-            .map((b) => b.charAt(0).toUpperCase() + b.slice(1))
-            .join(", ") || "Everyday use"}
         </p>
 
         <div className="space-y-1 mb-4">

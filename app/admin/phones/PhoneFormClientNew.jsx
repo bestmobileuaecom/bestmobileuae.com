@@ -10,7 +10,8 @@ import {
   InputField,
   TextareaField,
   SelectField,
-  ImageUpload
+  ImageUpload,
+  CommaSeparatedInput
 } from "@/components/admin";
 import { createClient } from "@/lib/supabase/client";
 import { generateSlug } from "@/lib/admin/phoneFormUtils";
@@ -739,22 +740,13 @@ export default function PhoneFormClient({ user, brands, stores = [], phone }) {
             {/* Storage & Colors */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Storage Options */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Storage Options
-                </label>
-                <input
-                  type="text"
-                  value={(formData.storage_options || []).join(", ")}
-                  onChange={(e) => {
-                    const arr = e.target.value.split(",").map(s => s.trim()).filter(Boolean);
-                    updateField("storage_options", arr);
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  placeholder="128GB, 256GB, 512GB, 1TB"
-                />
-                <p className="text-xs text-gray-500 mt-1">Comma separated</p>
-              </div>
+              <CommaSeparatedInput
+                label="Storage Options"
+                value={formData.storage_options || []}
+                onChange={(arr) => updateField("storage_options", arr)}
+                placeholder="128GB, 256GB, 512GB, 1TB"
+                hint="Comma separated"
+              />
 
               {/* Color Options */}
               <div>

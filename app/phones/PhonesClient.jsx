@@ -230,7 +230,8 @@ export default function PhonesClient() {
       } else if (activeGoal === "gaming") {
         result = result.filter((p) => p.scores?.performance >= 7);
       } else if (activeGoal === "value") {
-        result = result.filter((p) => p.scores?.value >= 7);
+        // Best Value = high overall score (good quality phones at their price point)
+        result = result.filter((p) => p.overallScore?.rating >= 7);
       }
     }
 
